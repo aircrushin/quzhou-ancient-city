@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171918">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="衢州古城 3D 开放世界与出租车模拟网页游戏：基于衢州古城真实路网、水亭门、天王塔、孔氏南宗家庙等核心地标与手绘衢州古城大地图。">
+  <!-- Original Quzhou ancient city art suite (Shuitingmen, Tianwang Pagoda, Xin'an Lake, Jianglang & Lanke silhouettes, bluestone & Huizhou architecture textures) -->
+  <title>衢州古城 · 水亭门与南孔圣地 3D 驾行</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/app-icon-192.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%23111c21'/%3E%3Cpath d='M9 21l15-9 15 9H9z' fill='%23e8a45e'/%3E%3Cpath d='M13 22h22v12h-6v-6a5 5 0 0 0-10 0v6h-6V22z' fill='%23f3e8d2'/%3E%3Cpath d='M7 39c6-3 11 2 17 0s11-3 17 0' fill='none' stroke='%2378c6b8' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <script>
+    // The chooser is interactive while the deferred game scripts download.
+    (() => {
+      function rememberChoice(event) {
+        const choice = event.target.closest?.('#language-screen [data-language]');
+        if (!choice) return;
+        const screen = choice.closest('#language-screen');
+        if (screen.hidden) return;
+        screen.dataset.pendingLanguage = choice.dataset.language;
+        screen.setAttribute('aria-busy', 'true');
+        for (const option of screen.querySelectorAll('[data-language]')) {
+          option.setAttribute('aria-current', String(option === choice));
+        }
+      }
+      document.addEventListener('click', rememberChoice);
+      document.addEventListener('DOMContentLoaded', () => {
+        document.removeEventListener('click', rememberChoice);
+      }, { once: true });
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="interface.css?v=18">
+  <script defer src="three.min.js"></script>
+  <script defer src="glb-loader.js?v=7"></script>
+  <script defer src="quzhou-roads.js?v=2"></script>
+  <script defer src="quzhou-landmarks.js?v=4"></script>
+  <script defer src="quzhou-atlas.js?v=3"></script>
+  <script defer src="world.js?v=30"></script>
+  <script defer src="district-architecture.js?v=14"></script>
+  <script defer src="warehouse.js?v=5"></script>
+  <script defer src="coast.js?v=5"></script>
+  <script defer src="port-detail.js?v=6"></script>
+  <script defer src="story-landmarks.js?v=7"></script>
+  <script defer src="night-market.js?v=13"></script>
+  <script defer src="boulevard-art.js?v=17"></script>
+  <script defer src="promenade-art.js?v=15"></script>
+  <script defer src="vehicles.js?v=31"></script>
+  <script defer src="concept-car.js?v=3"></script>
+  <script defer src="upgrades.js?v=1"></script>
+  <script defer src="boat-art.js?v=7"></script>
+  <script defer src="marine.js?v=15"></script>
+  <script defer src="look.js?v=18"></script>
+  <script defer src="street-render.js?v=20"></script>
+  <script defer src="navigation.js?v=17"></script>
+  <script defer src="english.js?v=14"></script>
+  <script defer src="language.js?v=1"></script>
+  <script defer src="taxi.js?v=8"></script>
+  <script defer src="traffic.js?v=3"></script>
+  <script defer src="sim.js?v=36"></script>
+  <script defer src="touch.js?v=22"></script>
+  <script defer src="game.js?v=36"></script>
+</head>
+<body>
+  <main id="game" aria-label="衢州古城">
+    <canvas id="scene" aria-label="衢州古城三维场景"></canvas>
+    <div id="vignette" aria-hidden="true"></div>
+    <div id="graphics-recovery" class="graphics-recovery" hidden>
+      <p id="graphics-message" role="status"></p>
+      <button id="graphics-retry" class="quiet" type="button" hidden>重试画面</button>
+      <button id="graphics-title" class="quiet" type="button">返回标题</button>
+    </div>
+
+    <section id="language-screen" class="title-screen language-screen" aria-labelledby="language-title" translate="no">
+      <div class="cover" aria-hidden="true"></div>
+      <div class="language-frame">
+        <div class="language-brand">
+          <span class="city-seal" aria-hidden="true">衢</span>
+          <span class="language-brand-text">
+            <span lang="zh-CN">衢州古城</span>
+            <span class="language-brand-en" lang="en">QUZHOU ANCIENT CITY</span>
+          </span>
+        </div>
+        <div class="language-panel">
+          <h1 id="language-title">
+            <span lang="zh-CN">选择语言</span>
+            <span lang="en">Select language</span>
+          </h1>
+          <div class="language-choices">
+            <button class="language-choice" type="button" lang="zh-CN" data-language="zh-CN"><span>中文</span><small aria-hidden="true">简体</small></button>
+            <button class="language-choice" type="button" lang="en" data-language="en"><span>English</span><small aria-hidden="true">EN</small></button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="title-screen" class="title-screen" aria-labelledby="game-title" hidden>
+      <div class="cover" aria-hidden="true"></div>
+      <div class="title-inner">
+        <div class="title-top">
+          <div class="wordmark"><span class="city-seal" aria-hidden="true">衢</span><span>衢州古城 <span class="wordmark-sub" lang="en">QUZHOU · ZHEJIANG</span></span></div>
+          <div class="title-options"><button id="title-language" class="quiet" type="button">语言</button><button id="title-audio" class="quiet sound-toggle" aria-pressed="true">声音开启</button><button class="quiet title-help" data-open="help">操作说明</button></div>
+        </div>
+        <div class="title-content">
+          <div class="title-kicker" lang="en">QUZHOU ANCIENT CITY</div>
+          <h1 id="game-title" data-en="QUZHOU">衢州古城</h1>
+          <p class="title-subtitle">南孔圣地 · 水亭门古城</p>
+          <div class="title-actions">
+            <div class="story-option taxi-option">
+              <button id="taxi-start" class="action primary" aria-describedby="taxi-mode-note">
+                <span class="mode-entry-head"><span id="taxi-start-label">出租车 · 开始接单</span><i class="mode-arrow" aria-hidden="true"></i></span>
+                <span id="taxi-mode-note" class="mode-entry-note">穿行水亭门、孔庙与马站底接客赚钱，打造顶配营运座驾</span>
+              </button>
+            </div>
+            <div class="story-option roam-option">
+              <button id="roam" class="action" aria-describedby="roam-mode-note">
+                <span class="mode-entry-head"><span id="roam-start-label">自由探索 · 衢州古城</span><i class="mode-arrow" aria-hidden="true"></i></span>
+                <span id="roam-mode-note" class="mode-entry-note">漫游古城八景打卡赢奖金，随时按 G 进入改装工坊</span>
+              </button>
+            </div>
+          </div>
+          <div id="boot-status" class="boot-status" role="status" aria-live="polite" hidden>
+            <div class="boot-status-head">
+              <span id="boot-status-text"></span>
+              <span id="boot-progress-percent" class="boot-progress-percent mono">0%</span>
+            </div>
+            <div id="boot-progress-track" class="boot-progress-track" role="progressbar" aria-label="加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="boot-progress-fill" class="boot-progress-fill"></span>
+            </div>
+          </div>
+        </div>
+        <div class="title-bottom">
+          <div class="shortcuts"><span><kbd>↑</kbd><kbd>↓</kbd> 选择</span><span><kbd>Enter</kbd> 确认</span><span><kbd>Esc</kbd> 返回</span></div>
+          <div class="cover-caption"><span>柯城 · 衢州古城与手绘舆图</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="hud" class="hud" data-touch-mode="walk" aria-label="游戏状态" hidden>
+      <div class="hud-leading">
+        <div class="hud-left">
+          <div class="district"><i class="location-mark" aria-hidden="true"></i><span id="district-name">水亭门古街</span><button id="city-time" class="mono hud-env-btn" type="button" title="点击或按 N 切换时段" aria-label="切换时段">10:30</button><button id="city-weather" class="weather-status hud-env-btn" type="button" title="点击或按 X 切换天气" aria-label="切换天气">晴朗</button></div>
+          <button id="explore-strip" class="explore-strip" type="button" hidden aria-label="古城探索进度，点击打开地图"><span id="explore-landmarks">八景 0 / 8</span><span id="explore-tapes">磁带 0 / 10</span><span id="explore-photos">明信片 0 / 5</span><span id="explore-race" class="mono" hidden></span></button>
+          <button id="tape-now-playing" class="tape-now-playing" type="button" hidden aria-label="当前播放的声景磁带，点击切换下一卷"><i aria-hidden="true">♪</i><span id="tape-playing-name"></span><small>T 切带</small></button>
+          <div id="buff-pill" class="buff-pill" hidden role="status" aria-live="polite"><i id="buff-icon" aria-hidden="true">★</i><strong id="buff-name">热辣加速</strong><span id="buff-time" class="mono">60s</span></div>
+          <div id="road-guide" class="road-guide" hidden><span id="road-guide-mark" aria-hidden="true"></span><strong id="road-guide-action"></strong><span id="road-guide-distance" class="mono"></span></div>
+          <div id="job-card" class="job-card">
+            <div id="job-kind" class="job-kind">当前目标</div>
+            <h2 id="job-title">自由探索</h2>
+            <p id="job-task">按 M 打开手绘舆图导航古城八景，按 G 进入改装工坊。</p>
+            <div id="job-meta" class="job-meta mono"></div>
+            <div id="taxi-stats" class="taxi-stats" hidden><span id="taxi-trips">0 单</span><span id="taxi-earned">¥0</span><span id="taxi-fare">空车</span></div>
+          </div>
+        </div>
+        <div class="hud-bottom-left">
+          <button id="map-button" class="minimap" aria-label="打开城市地图" aria-keyshortcuts="M">
+            <canvas id="radar" width="320" height="200"></canvas><span id="radar-scale" class="chart-ruler" aria-hidden="true"></span><span class="north mono" aria-hidden="true">N</span><span class="map-key"><kbd>M</kbd> 地图</span>
+          </button>
+        </div>
+      </div>
+      <div class="hud-trailing">
+        <div class="hud-right">
+          <div class="balance"><button id="hud-photo-btn" class="hud-photo-btn" type="button" data-open="photo" aria-label="打开拍照模式" aria-keyshortcuts="P"><kbd>P</kbd><span>拍照</span></button><button id="hud-workshop-btn" class="hud-garage-btn" type="button" data-open="workshop" aria-label="打开改装工坊" aria-keyshortcuts="G"><kbd>G</kbd><span>改装工坊</span></button><strong id="cash" class="mono" aria-label="现金">¥320</strong><button id="pause-button" class="icon-btn" data-open="pause" aria-label="暂停游戏" aria-keyshortcuts="Escape"><span class="pause-mark" aria-hidden="true"></span></button></div>
+        </div>
+        <div class="hud-drive-stack">
+          <div id="drift-hud" class="drift-hud" hidden aria-live="polite">
+            <div class="drift-hud-row"><span id="drift-label">漂移中</span><strong id="drift-score" class="mono">0 分</strong></div>
+            <div class="drift-bar" aria-hidden="true"><i id="drift-fill"></i></div>
+            <small id="drift-bonus" class="mono"></small>
+          </div>
+          <div id="driving" class="hud-bottom-right" hidden>
+            <div class="car-name"><span id="car-model">信安 GT</span><span id="car-grade" class="car-grade mono">C · 420</span><span id="gear" class="mono">D</span></div>
+            <div class="speed"><strong id="speed" class="mono">000</strong><span id="speed-unit" class="mono">KM/H</span></div>
+            <div class="speed-track" aria-hidden="true"><i id="speed-fill"></i></div>
+            <div class="meter" role="meter" aria-label="氮气余量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="nitro-meter"><span id="nitro-fill"></span></div>
+            <div class="car-meta"><span id="station">R 电台关闭</span><span id="vehicle-help">SHIFT 氮气</span></div>
+            <div id="car-tactile" class="car-tactile"><span id="car-lights" class="car-light-pill">L 自动灯</span><span id="car-horn-hint">H 鸣笛</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="race-hud" class="race-hud" hidden aria-live="polite">
+        <div class="race-hud-main">
+          <span id="race-hud-tag" class="race-hud-tag">环古城计时赛</span>
+          <strong id="race-timer" class="mono">00:00.00</strong>
+          <span id="race-gate" class="race-gate mono">门 1 / 9</span>
+          <span id="race-best" class="race-best mono" hidden></span>
+        </div>
+        <button id="race-abort" class="race-abort" type="button" title="终止当前计时赛 (Backspace)">终止计时</button>
+      </div>
+      <div id="world-label" class="world-label" hidden><b></b><span></span></div>
+      <div class="hud-notices">
+        <div id="look-hint" class="look-hint" hidden>
+          <div role="status"><span id="look-hint-method"></span><strong id="look-hint-value"></strong></div>
+          <button id="look-hint-adjust" type="button"><span>调整</span><kbd>F2</kbd></button>
+          <button id="look-hint-dismiss" type="button" aria-label="关闭视角提示">×</button>
+        </div>
+        <div id="toast" class="toast" role="status" hidden><span id="toast-kind"></span><strong id="toast-title"></strong><small id="toast-body"></small></div>
+        <div id="interaction" class="interaction" hidden><kbd>E</kbd><span></span></div>
+        <div id="radio-message" class="radio-message" role="status" aria-atomic="true" hidden><span class="radio-portrait" aria-hidden="true"></span><div><span id="radio-person"></span><p id="radio-line"></p></div></div>
+      </div>
+      <div class="desktop-controls" aria-label="操作提示">
+        <span><svg viewBox="0 0 16 20" fill="none" aria-hidden="true"><rect x="2.5" y="1.5" width="11" height="17" rx="5.5"/><path d="M8 3v5"/></svg>鼠标环视</span>
+        <span><kbd>C</kbd>机位</span><span class="desktop-interact"><kbd>E</kbd>交互</span><span class="desktop-drive-only"><kbd>H</kbd>鸣笛</span><span class="desktop-car-only"><kbd>L</kbd>车灯</span><span><kbd>F</kbd>寻景</span><span><kbd>T</kbd>声景</span><span class="desktop-walk-only"><kbd>V</kbd>召车</span><span><kbd>P</kbd>拍照</span><span><kbd>N</kbd>昼夜</span><span><kbd>X</kbd>天气</span><span><kbd>G</kbd>工坊</span><span><kbd>M</kbd>地图</span>
+      </div>
+      <div id="touch" class="touch" role="group" aria-label="触屏控制" data-mode="walk" hidden>
+        <button type="button" id="touch-camera" data-touch-action="KeyC" aria-label="切换视角"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M3.5 7.5h5l2-3h6l2 3h6v13h-22z"/><circle cx="14" cy="13.5" r="3.7"/><path d="M19.5 10h2"/></svg></button>
+        <div id="touch-move" class="touch-move" role="group" aria-label="移动摇杆，按住方向行走">
+          <div id="touch-stick" class="touch-stick" aria-hidden="true">
+            <span class="touch-stick-ticks"></span><span class="touch-stick-knob"></span><span id="touch-stick-label">移动</span>
+          </div>
+        </div>
+        <div id="touch-steering" class="touch-steering" role="group" aria-label="方向键" data-touch-group data-touch-slide hidden>
+          <button type="button" id="touch-left" data-touch-hold="left" aria-label="向左转"><svg viewBox="0 0 80 64" preserveAspectRatio="none" aria-hidden="true"><path class="paddle-shell" d="M71 4H42C22 4 8 17 5 37l-2 9c-1 7 3 12 10 12h47c7 0 11-4 12-11l5-35c1-5-1-8-6-8Z"/><path class="paddle-rim" d="M9 32C14 17 25 9 41 8h16"/><path class="paddle-arrow" d="m29 31 12-10 3 3-8 7h16v4H36l8 7-3 3-12-10z"/><path class="paddle-grip" d="m21 51 4-4m3 4 4-4m3 4 4-4"/></svg></button>
+          <button type="button" id="touch-right" data-touch-hold="right" aria-label="向右转"><svg viewBox="0 0 80 64" preserveAspectRatio="none" aria-hidden="true"><g transform="translate(80 0) scale(-1 1)"><path class="paddle-shell" d="M71 4H42C22 4 8 17 5 37l-2 9c-1 7 3 12 10 12h47c7 0 11-4 12-11l5-35c1-5-1-8-6-8Z"/><path class="paddle-rim" d="M9 32C14 17 25 9 41 8h16"/><path class="paddle-arrow" d="m29 31 12-10 3 3-8 7h16v4H36l8 7-3 3-12-10z"/><path class="paddle-grip" d="m21 51 4-4m3 4 4-4m3 4 4-4"/></g></svg></button>
+        </div>
+        <div class="touch-actions">
+          <div class="touch-quick-bar" role="group" aria-label="快捷操作">
+            <button type="button" id="touch-summon" data-touch-action="KeyV" aria-label="一键召车"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4.5 14.5 7 9h14l2.5 5.5v4.5h-2v-1.5h-15V19h-2z"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="19.5" cy="15.5" r="1.3"/></svg><span data-touch-label>召车</span></button>
+            <button type="button" id="touch-horn" data-touch-action="KeyH" aria-label="鸣笛" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4.5 10h4.5l7.5-4.5v13L9 14H4.5z"/><path d="M19.5 9.2a4.5 4.5 0 0 1 0 5.6M22 6.8a7.8 7.8 0 0 1 0 10.4"/></svg><span data-touch-label>鸣笛</span></button>
+            <button type="button" id="touch-lights" data-touch-action="KeyL" aria-label="切换车灯" aria-pressed="false" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M5 9.5a5 5 0 0 1 5-4.5h3v14h-3a5 5 0 0 1-5-4.5z"/><path d="M16 7.5h7M16 12h7.5M16 16.5h7"/></svg><span data-touch-label>车灯</span></button>
+            <button type="button" id="touch-photo" data-touch-action="KeyP" aria-label="拍照模式"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4 7.5h4.8l2-2.8h6.4l2 2.8H24v12H4z"/><circle cx="14" cy="13.5" r="3.4"/></svg><span data-touch-label>拍照</span></button>
+            <button type="button" id="touch-workshop" data-touch-action="KeyG" aria-label="打开改装工坊"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M19.5 4.5a5 5 0 0 0-6.2 6.2L6 18a1.7 1.7 0 0 0 2.4 2.4l7.3-7.3a5 5 0 0 0 6.2-6.2l-2.6 2.6-2.4-2.4z"/></svg><span data-touch-label>改装</span></button>
+          </div>
+          <div class="touch-tools" data-touch-group>
+            <button type="button" id="touch-boost" data-touch-hold="ShiftLeft" aria-label="氮气加速" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><g transform="rotate(27 14 12)"><path d="M11 2.5h6m-3 0V6m-4 4.5c0-2.4 1.6-4 4-4s4 1.6 4 4V20c0 1-.8 1.5-1.6 1.5h-4.8c-.8 0-1.6-.5-1.6-1.5z"/><path d="M10.5 11h7m-7 6.5h7"/></g><path d="m5.5 7 3-2m-5.5 7 3.5-2"/></svg><span data-touch-label>氮气</span></button>
+            <button type="button" id="touch-brake" data-touch-hold="Space" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><g class="road-mark"><path d="m6.5 17 11.3-11.3a2.2 2.2 0 0 1 3.1 3.1L10 19.5m-7 1h21"/><circle cx="7.8" cy="17.8" r="2.2"/><path d="m16 8 3 3"/></g><g class="marine-mark"><path d="M10 3v9m7-9v9M2 17q3.1 3 6 0 3 3 6 0 3 3 6 0 3.1 3 6 0m-22 4q2.1 1.8 4 0m12 0q2.2 1.8 4 0"/></g></svg><span data-touch-label>手刹</span></button>
+            <button type="button" id="touch-enter" class="touch-enter" data-touch-action="KeyE" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M14 3.5h8v17h-8m-9-8.5h11m-4-4 4 4-4 4"/></svg><span data-touch-label>交互</span></button>
+          </div>
+          <div id="touch-pedals" class="touch-pedals" role="group" aria-label="油门与刹车" data-touch-group data-touch-slide hidden>
+            <button type="button" id="touch-reverse" data-touch-hold="KeyS" aria-label="刹车或倒车"><svg class="pedal-shell" viewBox="0 0 82 60" preserveAspectRatio="none" aria-hidden="true"><path class="plate" d="m8 12 64-3c4 0 6 2 7 6l1 33c0 5-3 8-8 8H10c-5 0-8-3-8-7V21c0-5 2-8 6-9z"/><path class="edge" d="m8 17 39-2M8 48v2h11"/></svg><svg class="pedal-glyph" viewBox="0 0 40 30" aria-hidden="true"><g class="road-mark"><path d="m5 8 27-2 3 12-28 2z"/><path d="m10 11 1.4 4.5m4-5 1.4 4.5m4-5 1.4 4.5m4-5 1.4 4.5m-8.5 5.5 2 5h6"/></g><g class="marine-mark"><path d="M20 5v14m-5-5 5 5 5-5m-18 9q3.2 3 6.5 0 3.2 3 6.5 0 3.2 3 6.5 0 3.2 3 6.5 0"/></g></svg><span id="touch-reverse-label" data-touch-label>刹车</span><small id="touch-reverse-hint">倒车</small></button>
+            <button type="button" id="touch-gas" data-touch-hold="KeyW"><svg class="pedal-shell" viewBox="0 0 72 68" preserveAspectRatio="none" aria-hidden="true"><path class="plate" d="M22 3h39c5 0 8 3 8 8v47c0 5-3 8-8 8H9c-5 0-8-4-6-9L15 10c1-5 3-7 7-7z"/><path class="edge" d="M21 10h23M9 54l2-8"/></svg><svg class="pedal-glyph" viewBox="0 0 28 34" aria-hidden="true"><g class="road-mark"><path d="M11.5 3.5h10l-3 24a3 3 0 0 1-3 2.5h-8a2 2 0 0 1-2-2.5l3-21a3 3 0 0 1 3-3z"/><path d="m12.5 9-2 15m6.7-15-2.1 15"/></g><g class="marine-mark"><path d="m8 11 6-6 6 6m-12 7 6-6 6 6m-18 8q3 3 6 0 3 3 6 0 3 3 6 0 3 3 6 0"/></g></svg><span data-touch-label>油门</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="map-panel" class="overlay map-overlay" role="dialog" aria-modal="true" aria-label="手绘衢州古城大地图" hidden>
+      <div class="map-shell">
+        <div class="panel-head">
+          <h2>手绘衢州古城大地图</h2>
+          <div class="map-toolbar">
+            <button id="atlas-zoom-in" class="quiet" type="button" title="放大手绘舆图">＋</button>
+            <button id="atlas-zoom-out" class="quiet" type="button" title="缩小手绘舆图">－</button>
+            <button id="atlas-reset" class="quiet" type="button" title="恢复全城视图">全城</button>
+            <button id="atlas-locate" class="quiet" type="button" title="定位当前位置">定位</button>
+            <button id="toggle-tmap" class="quiet" type="button">切换实景底图</button>
+            <button class="quiet close-panel" data-close><kbd>ESC</kbd> 关闭</button>
+          </div>
+        </div>
+        <div class="map-content">
+          <div class="map-chart">
+            <div class="map-plot" style="position:relative;">
+              <canvas id="big-map" width="960" height="760" aria-label="手绘衢州古城真实路网、八大地标与任务标记"></canvas>
+              <div id="atlas-tooltip" class="atlas-tooltip" hidden>
+                <div class="atlas-tooltip-head"><strong id="atlas-tip-name"></strong><span id="atlas-tip-badge"></span></div>
+                <p id="atlas-tip-desc"></p>
+                <small id="atlas-tip-hint">点击即可规划古城导航路线</small>
+              </div>
+              <div id="tmap-container" style="position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;overflow:hidden;" hidden></div>
+              <div class="map-compass mono" aria-hidden="true">N<span></span></div>
+            </div>
+            <div class="map-legend"><span><i class="legend-player"></i>当前位置</span><span><i class="legend-route"></i>导航路线</span><span><i class="legend-tape"></i>声景磁带</span><span><i class="legend-race"></i>陆路赛</span><span><i class="legend-lake"></i>水上赛</span><span><i class="legend-taxi"></i>出租车</span><span><i class="legend-shop"></i>改装工坊</span><span id="atlas-scale" class="chart-ruler" aria-hidden="true"></span></div>
+          </div>
+          <aside class="map-sidebar">
+            <div class="map-mode-switch" role="group" aria-label="玩法模式切换">
+              <button id="map-mode-roam" type="button" class="map-mode-btn">自由探索</button>
+              <button id="map-mode-taxi" type="button" class="map-mode-btn">出租车接客</button>
+            </div>
+            <div class="map-heading"><h3 id="map-heading">古城探索</h3><span id="map-progress" class="mono">0 / 8</span></div>
+            <div class="map-records">
+              <div id="map-jobs" class="map-jobs"></div>
+            </div>
+            <div class="map-landmarks-section">
+              <div class="map-collection-tabs" id="map-collection-tabs" role="tablist" aria-label="古城探索图鉴">
+                <button type="button" class="map-col-tab" data-col-tab="landmarks" role="tab" aria-selected="true">八景 <span id="tab-landmarks-count" class="mono">0/8</span></button>
+                <button type="button" class="map-col-tab" data-col-tab="tapes" role="tab" aria-selected="false">声景 <span id="tab-tapes-count" class="mono">0/10</span></button>
+                <button type="button" class="map-col-tab" data-col-tab="photos" role="tab" aria-selected="false">明信片 <span id="tab-photos-count" class="mono">0/5</span></button>
+              </div>
+              <div id="map-landmarks" class="map-landmarks"></div>
+            </div>
+            <div class="map-workshop-actions">
+              <button type="button" id="map-workshop-nav" class="map-market"><strong>府东街改装工坊</strong><span>导航前往车辆升级</span></button>
+              <button type="button" id="map-workshop-open" class="map-market map-garage-direct"><strong>立即进入改装工坊</strong><span>快捷键 G · 3D 实景改装</span></button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause-panel" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+      <div class="sheet pause-sheet">
+        <div class="panel-head"><h2 id="pause-title">已暂停</h2><button id="fullscreen-button" class="quiet" type="button" hidden>全屏</button></div>
+        <div class="pause-body">
+          <div class="pause-actions">
+            <button class="action primary" data-close>继续游戏</button>
+            <button id="pause-workshop" class="action secondary" type="button">打开改装工坊 (G)</button>
+            <button id="pause-switch-mode" class="action secondary" type="button">切换至出租车模式</button>
+            <button class="action secondary" data-open="help">查看操作</button>
+            <button id="reset-position" class="action secondary">返回车库</button>
+            <button id="back-to-title" class="action secondary">返回标题</button>
+          </div>
+          <div class="pause-settings">
+            <h3 class="settings-heading">游戏设置</h3>
+            <label class="setting-row"><span>语言</span><select id="language-setting" class="quiet"><option value="zh-CN" lang="zh-CN" data-language-name>中文</option><option value="en" lang="en" data-language-name>English</option></select></label>
+            <label class="setting-row"><span>画质</span><select id="graphics-setting" class="quiet"><option value="auto">自动</option><option value="ultra">电影级 (AAA)</option><option value="high">高</option><option value="performance">性能</option></select></label>
+            <label class="setting-row"><span>触屏操作</span><select id="touch-setting" class="quiet"><option value="auto">自动识别</option><option value="on">开启</option><option value="off" data-en="Off">关闭</option></select></label>
+            <div class="setting-row look-setting-row"><label for="look-setting">视角灵敏度</label><select id="look-setting" class="quiet"><option value="low">低</option><option value="normal">标准</option><option value="high">高</option><option value="custom" hidden>自定义</option></select><button id="look-open" class="quiet" type="button">微调</button></div>
+            <div class="sheet-footer"><button id="pause-audio" class="quiet sound-toggle" aria-pressed="true">声音开启</button><button id="motion-button" class="quiet" aria-pressed="false">镜头震动开启</button></div>
+            <div class="pause-tools" role="group" aria-label="快捷切换"><button class="quiet" aria-label="切换视角" data-action="KeyC">视角</button><button class="quiet" aria-label="切换昼夜" data-action="KeyN">昼夜</button><button class="quiet" aria-label="切换电台" data-action="KeyR">电台</button><button class="quiet" aria-label="切换声景磁带" data-action="KeyT">声景</button><button class="quiet" aria-label="切换天气" data-action="KeyX">天气</button><button class="quiet" aria-label="一键召车" data-action="KeyV">召车</button><button class="quiet" aria-label="鸣笛" data-action="KeyH">鸣笛</button><button class="quiet" aria-label="切换车灯" data-action="KeyL">车灯</button><button class="quiet" aria-label="拍照模式" data-open="photo">拍照</button></div>
+          </div>
+        </div>
+        <div id="look-controls" class="look-controls" hidden>
+          <label class="look-device" for="look-input-device"><span>输入设备</span><select class="quiet" id="look-input-device"><option value="mouse">鼠标</option><option value="touch">触屏</option></select></label>
+          <div class="look-adjustment">
+            <label for="look-gain">转向速度</label><output id="look-gain-value" for="look-gain">100%</output>
+            <div class="look-track-row"><span aria-hidden="true">30%</span><input id="look-gain" type="range" min="30" max="180" step="1" value="100"><span aria-hidden="true">180%</span></div>
+          </div>
+          <div class="look-settings-actions"><button id="look-test-resume" class="action primary" type="button">回到游戏</button><button id="look-settings-back" class="quiet" type="button">返回设置</button><button id="look-reset" class="quiet" type="button">恢复标准</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="workshop-panel" class="overlay workshop-overlay" role="dialog" aria-modal="true" aria-labelledby="workshop-title" hidden>
+      <div id="showroom-stage" class="showroom-stage" aria-label="3D 车辆展厅，拖拽可旋转观察">
+        <div class="showroom-hud-top">
+          <div class="showroom-badge">
+            <span id="workshop-grade" class="pi-badge mono">C</span>
+            <div>
+              <div class="showroom-name-row"><strong id="workshop-car-name">衢州出租 · TAXI</strong><span id="workshop-car-tag">营运专车</span></div>
+              <p id="workshop-car-desc">衢州古城主力营运轿车</p>
+            </div>
+          </div>
+          <div class="showroom-metrics mono">
+            <div><span>综合指数</span><strong id="workshop-pi">380</strong></div>
+            <div><span>极速</span><strong id="workshop-topkmh">134 KM/H</strong></div>
+            <div><span>0-100</span><strong id="workshop-zero100">3.1 s</strong></div>
+            <div><span>改装进度</span><strong id="workshop-level-sum">0 / 24</strong></div>
+          </div>
+        </div>
+        <div class="showroom-hud-bottom">
+          <span class="showroom-hint">拖拽画面 360° 环视 · 滚轮缩放</span>
+          <div class="showroom-tools">
+            <button id="showroom-night-btn" class="quiet showroom-btn" type="button" aria-pressed="false">夜间展厅灯效</button>
+            <button id="workshop-summon-btn" class="quiet showroom-btn primary" type="button">唤出此座驾驾驶</button>
+          </div>
+        </div>
+      </div>
+      <div class="workshop-drawer">
+        <header class="workshop-header">
+          <div>
+            <div class="workshop-eyebrow">QUZHOU CUSTOM WORKS</div>
+            <h2 id="workshop-title">府东街改装工坊</h2>
+          </div>
+          <div class="workshop-header-right">
+            <div class="workshop-cash-pill"><span>现金</span><strong id="workshop-cash" class="mono">¥320</strong></div>
+            <button class="quiet close-panel" type="button" data-close><kbd>ESC</kbd> 返回</button>
+          </div>
+        </header>
+        <div id="workshop-vehicles" class="workshop-vehicles" role="tablist" aria-label="选择车辆"></div>
+        <div id="workshop-stats" class="workshop-stats" aria-label="车辆性能参数"></div>
+        <div class="workshop-mode-tabs" role="tablist" aria-label="改装分类">
+          <button type="button" class="workshop-tab" data-workshop-tab="performance" aria-selected="true">性能改装 (6大系统)</button>
+          <button type="button" class="workshop-tab" data-workshop-tab="visual" aria-selected="false">外观与灯效定制</button>
+        </div>
+        <div id="workshop-content" class="workshop-content"></div>
+      </div>
+    </section>
+
+    <section id="photo-panel" class="overlay photo-overlay" role="dialog" aria-modal="true" aria-label="自由拍照模式" hidden>
+      <div id="photo-stage" class="photo-stage" aria-label="自由镜头取景框，拖拽旋转、滚轮缩放、WASD 与 QE 平移">
+        <div class="photo-frame-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div id="photo-flash" class="photo-flash" aria-hidden="true"></div>
+        <div class="photo-top-bar">
+          <div class="photo-title-pill">
+            <span class="photo-eyebrow">QUZHOU PHOTO STUDIO</span>
+            <strong id="photo-location">衢州古城</strong>
+            <span id="photo-readout" class="mono">50° · 10:24 · 晴朗</span>
+          </div>
+          <span class="photo-hint">拖拽环视 · 滚轮缩放 · WASD/QE 移动 · H 隐藏界面</span>
+        </div>
+        <div id="photo-subject-badge" class="photo-subject-badge" hidden aria-live="polite"></div>
+        <div class="photo-dock">
+          <div class="photo-sliders">
+            <label class="photo-control">
+              <span>镜头焦距</span>
+              <input id="photo-fov" type="range" min="32" max="78" step="1" value="50">
+              <output id="photo-fov-val" class="mono">50°</output>
+            </label>
+            <label class="photo-control">
+              <span>时段光线</span>
+              <input id="photo-hour" type="range" min="0" max="23.9" step="0.1" value="10.4">
+              <output id="photo-hour-val" class="mono">10:24</output>
+            </label>
+          </div>
+          <div class="photo-studio-row">
+            <div class="photo-time-group" role="group" aria-label="光线时段预设">
+              <button type="button" class="photo-chip" data-photo-time="6.5" aria-pressed="false">晨曦 06:30</button>
+              <button type="button" class="photo-chip" data-photo-time="12.5" aria-pressed="false">正午 12:30</button>
+              <button type="button" class="photo-chip" data-photo-time="17.75" aria-pressed="false">金昏 17:45</button>
+              <button type="button" class="photo-chip" data-photo-time="21.5" aria-pressed="false">华灯 21:30</button>
+            </div>
+            <button id="photo-lights-btn" class="photo-chip photo-lights-toggle" type="button" aria-pressed="false">车灯：自动</button>
+          </div>
+          <div class="photo-presets-row">
+            <div class="photo-filter-group" role="group" aria-label="照片滤镜预设">
+              <button type="button" class="photo-chip" data-photo-filter="none" aria-pressed="true">原色</button>
+              <button type="button" class="photo-chip" data-photo-filter="film" aria-pressed="false">胶片暖金</button>
+              <button type="button" class="photo-chip" data-photo-filter="celadon" aria-pressed="false">青瓷水墨</button>
+              <button type="button" class="photo-chip" data-photo-filter="neon" aria-pressed="false">霓虹夜色</button>
+            </div>
+            <button id="photo-postcard-btn" class="photo-chip photo-postcard-toggle" type="button" aria-pressed="true">明信片印章框：开</button>
+          </div>
+          <div class="photo-actions">
+            <button id="photo-weather-btn" class="quiet photo-btn" type="button">天气：晴朗</button>
+            <button id="photo-reset-btn" class="quiet photo-btn" type="button">重置镜头</button>
+            <button id="photo-hide-btn" class="quiet photo-btn" type="button"><kbd>H</kbd> 隐藏界面</button>
+            <button id="photo-capture-btn" class="quiet photo-btn primary" type="button">拍摄保存 PNG</button>
+            <button class="quiet photo-btn" type="button" data-close><kbd>ESC</kbd> 退出</button>
+          </div>
+        </div>
+        <button id="photo-show-ui-btn" class="photo-show-ui-btn" type="button" hidden><kbd>H</kbd> 显示取景界面 · 按空格截图</button>
+      </div>
+    </section>
+
+    <section id="help-panel" class="overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+      <div class="sheet help-sheet"><div class="panel-head"><h2 id="help-title">操作说明</h2><button class="quiet close-panel" data-close><kbd>ESC</kbd> 关闭</button></div>
+        <div class="guide-body">
+          <dl class="key-guide">
+            <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>步行、驾驶与操船，也可用方向键。</dd></div>
+            <div><dt>鼠标</dt><dd>移动鼠标环顾四周，按 Esc 释放鼠标。</dd></div>
+            <div><dt><kbd>E</kbd><kbd>G</kbd></dt><dd>交互、上下车船与接客 / 随时打开改装工坊</dd></div>
+            <div><dt><kbd>SHIFT</kbd><kbd>SPACE</kbd></dt><dd>奔跑或氮气加速 / 手刹或船艇制动</dd></div>
+            <div><dt><kbd>M</kbd><kbd>C</kbd></dt><dd>查看地图 / 切换机位</dd></div>
+            <div><dt><kbd>V</kbd><kbd>P</kbd></dt><dd>一键召唤常用座驾 / 自由镜头拍照模式</dd></div>
+            <div><dt><kbd>H</kbd><kbd>L</kbd></dt><dd>鸣笛（行人避让 / 船艇汽笛）/ 手动切换车灯</dd></div>
+            <div><dt><kbd>F</kbd><kbd>T</kbd><kbd>R</kbd><kbd>N</kbd><kbd>X</kbd></dt><dd>寻景 / 声景随身听 / 电台 / 昼夜 / 天气</dd></div>
+          </dl>
+          <dl class="touch-guide">
+            <div><dt>移动</dt><dd>按住圆盘边缘朝该方向走，也可在左下空白处按住拖动。推到圈外奔跑，右侧快捷栏可一键召车、拍照或进入工坊。</dd></div>
+            <div><dt>转动视角</dt><dd>滑动右半屏环视，点暂停旁的相机图标切换机位。视角灵敏度可在暂停菜单调整。</dd></div>
+            <div><dt>驾驶</dt><dd>左手转向，右手在油门与刹车间滑动。停稳后按住刹车倒车，按住氮气加速，上方快捷栏可鸣笛与切换车灯。</dd></div>
+            <div><dt>交互</dt><dd>靠近车辆、码头、美食摊位、孔庙、钟楼或改装工坊时，点右侧出现的动作键。</dd></div>
+          </dl>
+          <p class="guide-tip">在地图里切换自由探索与出租车接客模式，探索古城八景可解锁快速传送，收录 10 卷声景磁带后可按 T 随身回放，在夜市与马站底品尝三头一掌与烤饼可获得限时增益，也可赴孔庙行礼或登钟楼鸣钟，在拍照模式（P）可切换 4 组时段光线预设与车灯常亮，拍下 5 处滤镜明信片打卡。</p>
+          <details class="model-credit"><summary>模型署名</summary><p>烂柯 RS 改编自 Car Concept。原型由 Unity Fan 设计，模型由 Eric Chadwick 制作，© 2024 Darmstadt Graphics Group GmbH。游戏版本重新减面、配色，并重新绑定车轮。</p><a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept" target="_blank" rel="noopener">原始作品</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0 许可</a></details>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
