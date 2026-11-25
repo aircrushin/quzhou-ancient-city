@@ -1,0 +1,12 @@
+# 本地浏览器走查留下的配置、缓存和扩展
+.qa-chrome-profile/
+
+# 助手本地记忆
+.workbuddy/
+
+node_modules/
+.vercel/
+
+# 走查截图可以再生成，不进版本库
+tools/qa_*.png
+*.crdownload
