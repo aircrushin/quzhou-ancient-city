@@ -2825,7 +2825,83 @@
       return character;
     }
 
-    function person(color, pants, skin, player = false, styleIndex = null) {
+    const umbrellaHandleGeo = new T.CylinderGeometry(.011, .012, .94, 6);
+    const umbrellaCanopyGeo = new T.ConeGeometry(.60, .20, 12, 1, true);
+    const umbrellaTipGeo = new T.CylinderGeometry(.009, .016, .09, 6);
+    const bambooMat = new T.MeshStandardMaterial({ color: '#46311f', roughness: .82, metalness: .04 });
+    const umbrellaMats = ['#c84a3b', '#4f8681', '#385570', '#d8a647', '#dcd5c3']
+      .map(hex => new T.MeshStandardMaterial({ color: hex, roughness: .60, metalness: .04, side: T.DoubleSide }));
+    const handLanternStickGeo = new T.CylinderGeometry(.008, .009, .36, 5);
+    const handLanternCordGeo = new T.CylinderGeometry(.004, .004, .11, 4);
+    const handLanternBodyGeo = new T.CylinderGeometry(.070, .060, .165, 6);
+    const handLanternCapGeo = new T.CylinderGeometry(.056, .056, .022, 6);
+    const handLanternBodyMat = new T.MeshBasicMaterial({ color: '#ffcb74', toneMapped: false });
+    const handLanternCapMat = new T.MeshStandardMaterial({ color: '#2b1e16', roughness: .72, metalness: .08 });
+    const handLanternGlowTex = (() => {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 64;
+      const cx = cv.getContext('2d');
+      const g = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(255, 240, 198, 1)');
+      g.addColorStop(.32, 'rgba(255, 188, 92, .65)');
+      g.addColorStop(.68, 'rgba(255, 146, 54, .18)');
+      g.addColorStop(1, 'rgba(255, 146, 54, 0)');
+      cx.fillStyle = g;
+      cx.fillRect(0, 0, 64, 64);
+      const tex = new T.CanvasTexture(cv);
+      tex.colorSpace = T.SRGBColorSpace;
+      return tex;
+    })();
+    const handLanternGlowMat = new T.SpriteMaterial({
+      map: handLanternGlowTex, color: '#ffbe64', transparent: true, opacity: .66,
+      depthWrite: false, blending: T.AdditiveBlending, toneMapped: false,
+    });
+    function attachWeatherProps(root, personId, isPlayer, shoulder = [.20, 1.44, 0], forceProps = false) {
+      let umbrella = null;
+      let handLantern = null;
+      const [sx, sy, sz] = shoulder;
+      const umbrellaBaseY = sy - .175;
+      const lanternBaseY = sy - .382;
+      if (isPlayer || forceProps || personId % 5 !== 0) {
+        umbrella = new T.Group();
+        const handle = new T.Mesh(umbrellaHandleGeo, bambooMat);
+        handle.position.y = .39;
+        const canopy = new T.Mesh(umbrellaCanopyGeo, umbrellaMats[isPlayer ? 0 : (personId % umbrellaMats.length)]);
+        canopy.position.y = .79;
+        const tip = new T.Mesh(umbrellaTipGeo, bambooMat);
+        tip.position.y = .91;
+        umbrella.add(handle, canopy, tip);
+        umbrella.position.set(sx - .055, umbrellaBaseY, sz + .31);
+        umbrella.visible = false;
+        umbrella.scale.setScalar(.001);
+        root.add(umbrella);
+      }
+      if (!isPlayer && (forceProps || personId % 5 === 1 || personId % 5 === 3)) {
+        handLantern = new T.Group();
+        const stick = new T.Mesh(handLanternStickGeo, bambooMat);
+        stick.rotation.x = Math.PI * .36;
+        stick.position.set(0, .06, .15);
+        const cord = new T.Mesh(handLanternCordGeo, bambooMat);
+        cord.position.set(0, .06, .30);
+        const body = new T.Mesh(handLanternBodyGeo, handLanternBodyMat);
+        body.position.set(0, -.07, .30);
+        const topCap = new T.Mesh(handLanternCapGeo, handLanternCapMat);
+        topCap.position.set(0, .02, .30);
+        const botCap = new T.Mesh(handLanternCapGeo, handLanternCapMat);
+        botCap.position.set(0, -.16, .30);
+        const glow = new T.Sprite(handLanternGlowMat);
+        glow.position.set(0, -.07, .30);
+        glow.scale.set(.58, .58, 1);
+        handLantern.add(stick, cord, body, topCap, botCap, glow);
+        handLantern.position.set(sx + .008, lanternBaseY, sz + .315);
+        handLantern.visible = false;
+        handLantern.scale.setScalar(.001);
+        root.add(handLantern);
+      }
+      return { umbrella, handLantern, umbrellaBaseY, lanternBaseY, umbrellaOpen: 0, lanternOpen: 0 };
+    }
+
+    function person(color, pants, skin, player = false, styleIndex = null, forceProps = false) {
       const root = new T.Group();
       const rig = new T.Group();
       const styleIdx = styleIndex != null
@@ -2935,7 +3011,10 @@
         scene.add(root);
         const personId = people++;
         const pBootRef = jPos('boot_L');
+        const pArmL = jPos('arm_L');
+        const weatherProps = attachWeatherProps(root, personId, player, pArmL, forceProps);
         return { root, upper, chest, head, limbs, shadow, distant, player, female: Boolean(style.female),
+          ...weatherProps,
           hipRestY: pUpper[1], footRestY: pBootRef[1] + 0.002,
           proneRestHeight: player ? .29 : .156,
           breath: (personId * 1.37) % (Math.PI * 2), gait: (personId * .367) % 1, stride: 0, crouch: 0,
@@ -3059,7 +3138,9 @@
       const shadow = mesh(root, decal, pedestrianShadow, 0, .009, 0, .92, 1, .97);
       scene.add(root);
       const personId = people++;
+      const weatherProps = attachWeatherProps(root, personId, player, [.22, hipHeight + .505, .025], forceProps);
       return { root, upper, chest, head, limbs, shadow, distant, player, proneRestHeight: style.bag ? .344 : .156,
+        ...weatherProps,
         breath: (personId * 1.37) % (Math.PI * 2), gait: (personId * .367) % 1, stride: 0, crouch: 0,
         turnLean: 0, prevYaw: null, armSwingMul: .88 + ((personId * 29) % 100) / 360,
         x: 0, z: 0, yaw: 0 };
@@ -3122,16 +3203,20 @@
       person.shadow.scale.set(.92 + .22 * flat, 1, .97 + 1.28 * flat);
       person.streetPose = r;
     }
-    function posePerson(person, dt, speed = 0, fleeing = false, crouching = false, eye = null) {
+    function posePerson(person, dt, speed = 0, fleeing = false, crouching = false, eye = null, env = null) {
       const reaction = person.streetReaction;
       if (reaction?.kind === 'fatal' && reaction.flat === 1 && person.restingReaction === reaction) return;
       const safeDt = Math.min(dt, .05);
       const blend = 1 - Math.exp(-10 * safeDt);
       person.stride = lerp(person.stride, speed, blend);
       person.crouch = lerp(person.crouch, crouching ? 1 : 0, blend);
+      const sitTarget = person.sitting && !reaction && !fleeing ? 1 : 0;
+      if (safeDt > 1e-4) person.sitBlend = lerp(person.sitBlend ?? 0, sitTarget, 1 - Math.exp(-7.5 * safeDt));
+      else if (person.sitBlend == null) person.sitBlend = sitTarget;
+      const sit = person.sitBlend;
       const low = person.crouch;
-      const move = D.clamp(person.stride / 1.15, 0, 1);
-      const run = D.clamp((person.stride - 2.35) / 3.85, 0, 1) * (1 - low);
+      const move = D.clamp(person.stride / 1.15, 0, 1) * (1 - sit);
+      const run = D.clamp((person.stride - 2.35) / 3.85, 0, 1) * (1 - low) * (1 - sit);
       const stance = lerp(.62, .45, run) + low * .06;
       const strideLen = lerp(.66 + .11 * Math.min(person.stride, 2.6) + .30 * run, .48, low) * move;
       const gaitFreq = move > .015 ? D.clamp((person.stride * stance) / Math.max(.28, strideLen), .45, 2.35) : 0;
@@ -3148,6 +3233,34 @@
       }
       person.prevYaw = person.yaw;
       person.turnLean = lerp(person.turnLean ?? 0, D.clamp(yawRate * .042 * move, -.16, .16), 1 - Math.exp(-8 * safeDt));
+      if (person.umbrella || person.handLantern) {
+        const propBlend = safeDt > 1e-4 ? (1 - Math.exp(-7.5 * safeDt)) : 1;
+        const wantsUmbrella = Boolean(person.umbrella && env && env.rain > .32 && !fleeing && !crouching && !reaction && !(person.player && env.sheltered));
+        const wantsLantern = Boolean(person.handLantern && env && env.night > .36 && env.rain < .42 && !fleeing && !crouching && !reaction && !person.sitting);
+        person.umbrellaOpen = lerp(person.umbrellaOpen ?? 0, wantsUmbrella ? 1 : 0, propBlend);
+        person.lanternOpen = lerp(person.lanternOpen ?? 0, wantsLantern ? 1 : 0, propBlend);
+        if (person.umbrella) {
+          const uo = person.umbrellaOpen;
+          person.umbrella.visible = uo > .02;
+          if (person.umbrella.visible) {
+            const sc = .28 + .72 * uo;
+            person.umbrella.scale.set(sc, .45 + .55 * uo, sc);
+            const sitDrop = sit * ((person.hipRestY ?? hipHeight) - ((person.sitHeight ?? 0) > .25 ? (person.sitHeight + .105) : .29));
+            person.umbrella.position.y = (person.umbrellaBaseY ?? 1.27) + .018 * Math.sin(phase * 2) * move - .24 * low - sitDrop;
+            person.umbrella.rotation.set(-.25 + .04 * move, 0, .15 + Math.sin(phase) * .038 * move);
+          }
+        }
+        if (person.handLantern) {
+          const lo = person.lanternOpen;
+          person.handLantern.visible = lo > .02;
+          if (person.handLantern.visible) {
+            person.handLantern.scale.setScalar(.25 + .75 * lo);
+            person.handLantern.position.y = (person.lanternBaseY ?? 1.06) + .018 * Math.sin(phase * 2) * move - .22 * low;
+            const swayT = (env?.clock ?? 0) * 2.2 + (person.breath ?? 0);
+            person.handLantern.rotation.set(.08 + Math.sin(phase) * .12 * move + Math.sin(swayT) * .04, 0, Math.cos(swayT * .8) * .06);
+          }
+        }
+      }
       if (person.distant) {
         person.distant.position.y = .024 * Math.sin(phase * 2) * move;
         person.distant.rotation.z = .047 * Math.sin(phase) * move;
@@ -3155,30 +3268,41 @@
         // elevation live and prepare the detailed joints before the switch back.
         if (eye && !reaction && !person.streetPose && (person.x - eye.x) ** 2 + (person.z - eye.z) ** 2 > 48 ** 2) return;
       }
-      person.breath = (person.breath + safeDt * (1.48 + .55 * run)) % (Math.PI * 2);
+      person.breath = (person.breath + safeDt * lerp(1.48 + .55 * run, .96, sit)) % (Math.PI * 2);
       const inhale = Math.sin(person.breath);
-      const rest = (1 - move) * (1 - low);
+      const rest = (1 - move) * (1 - low) * (1 - sit);
       const turnLean = person.turnLean;
       const hipScale = person.female ? 1.18 : 1.0;
       const restHipY = person.hipRestY ?? hipHeight;
       const restFootY = person.footRestY ?? .082;
-      const pelvisX = Math.sin(phase) * move * (.022 * hipScale - .006 * run) + (.006 + .004 * Math.sin(person.breath * .32)) * rest;
-      const pelvisY = restHipY - .005 * rest - .046 * run - .265 * low - move * (.016 + .022 * Math.cos(2 * phase));
-      const pelvisZ = -.174 * low + .040 * run;
-      const pelvisYaw = -Math.sin(phase) * move * (.082 * hipScale + .050 * run) + .018 * rest;
-      const pelvisRoll = Math.cos(phase) * move * (.040 * hipScale) - turnLean * .42 - .010 * rest;
+      const benchSit = (person.sitHeight ?? 0) > .25;
+      const sitHipY = benchSit ? (person.sitHeight + .105) : .29;
+      const sitHipZ = benchSit ? -.075 : -.095;
+      const standPelvisX = Math.sin(phase) * move * (.022 * hipScale - .006 * run) + (.006 + .004 * Math.sin(person.breath * .32)) * rest;
+      const standPelvisY = restHipY - .005 * rest - .046 * run - .265 * low - move * (.016 + .022 * Math.cos(2 * phase));
+      const standPelvisZ = -.174 * low + .040 * run;
+      const pelvisX = lerp(standPelvisX, 0, sit);
+      const pelvisY = lerp(standPelvisY, sitHipY + .003 * inhale, sit);
+      const pelvisZ = lerp(standPelvisZ, sitHipZ, sit);
+      const pelvisYaw = lerp(-Math.sin(phase) * move * (.082 * hipScale + .050 * run) + .018 * rest, 0, sit);
+      const pelvisRoll = lerp(Math.cos(phase) * move * (.040 * hipScale) - turnLean * .42 - .010 * rest, 0, sit);
       person.upper.position.set(pelvisX, pelvisY, pelvisZ);
       person.upper.rotation.set(0, pelvisYaw, pelvisRoll);
 
-      const chestPitch = .048 * move + .162 * run + .392 * low + .008 * inhale * rest;
-      const chestYaw = Math.sin(phase) * move * (.140 + .090 * run) - .045 * rest;
-      const chestRoll = -pelvisRoll * .62 + Math.cos(phase) * move * .022 - turnLean * .65 + (.018 + inhale * .005) * rest;
-      person.chest.position.y = .0038 * inhale * (1 - run);
+      const sitChestPitch = (benchSit && person.sitHasBack ? -.065 : .055) + .012 * inhale;
+      const sitChestYaw = Math.sin(person.breath * .34) * .045;
+      const chestPitch = lerp(.048 * move + .162 * run + .392 * low + .008 * inhale * rest, sitChestPitch, sit);
+      const chestYaw = lerp(Math.sin(phase) * move * (.140 + .090 * run) - .045 * rest, sitChestYaw, sit);
+      const chestRoll = lerp(-pelvisRoll * .62 + Math.cos(phase) * move * .022 - turnLean * .65 + (.018 + inhale * .005) * rest, .012 * Math.sin(person.breath * .45), sit);
+      person.chest.position.y = (.0038 + .0024 * sit) * inhale * (1 - run);
       person.chest.rotation.set(chestPitch, chestYaw, chestRoll);
 
-      person.head.rotation.x = -.035 * move - .105 * run - .25 * low + .010 * Math.cos(2 * phase) * move + .014 * inhale * rest;
-      person.head.rotation.y = -chestYaw * .62 + turnLean * .85 + (Math.sin(person.breath * .42) * .115 + (person.player ? .045 : 0)) * rest;
-      person.head.rotation.z = -chestRoll * .52 - .014 * rest;
+      const standHeadX = -.035 * move - .105 * run - .25 * low + .010 * Math.cos(2 * phase) * move + .014 * inhale * rest;
+      const standHeadY = -chestYaw * .62 + turnLean * .85 + (Math.sin(person.breath * .42) * .115 + (person.player ? .045 : 0)) * rest;
+      const standHeadZ = -chestRoll * .52 - .014 * rest;
+      person.head.rotation.x = lerp(standHeadX, -.048 + Math.sin(person.breath * .25) * .042, sit);
+      person.head.rotation.y = lerp(standHeadY, Math.sin(person.breath * .38) * .22, sit);
+      person.head.rotation.z = lerp(standHeadZ, -.025 * Math.sin(person.breath * .38), sit);
 
       const swingMul = person.armSwingMul ?? 1;
       for (const limb of person.limbs) {
@@ -3213,7 +3337,13 @@
         const hipZ = pelvisZ - limb.side * pelvisYaw * .10;
         limb.hip.position.set(hipX, hipY, hipZ);
         const restFootZ = limb.side > 0 ? .022 * rest : -.016 * rest;
-        solveLeg(limb, hipY, hipZ, footY, footZ + restFootZ + low * .036, ankleTilt);
+        const sitFootY = benchSit ? restFootY : (restFootY + .018);
+        const sitFootZ = benchSit ? (.35 + limb.side * .036) : (.45 + limb.side * .032);
+        const finalFootY = lerp(footY, sitFootY, sit);
+        const finalFootZ = lerp(footZ + restFootZ + low * .036, sitFootZ, sit);
+        const finalAnkle = lerp(ankleTilt, benchSit ? .04 : .18, sit);
+        solveLeg(limb, hipY, hipZ, finalFootY, finalFootZ, finalAnkle);
+        if (!reaction) limb.hip.rotation.z = limb.side * (benchSit ? .045 : .085) * sit;
 
         const armPhase = Math.sin(phase - .24 + (limb.side === -1 ? Math.PI : 0));
         const forwardSwing = D.clamp(-armPhase, 0, 1);
@@ -3224,6 +3354,34 @@
         limb.arm.rotation.y = -limb.side * (.060 + .055 * move + .04 * forwardSwing * move);
         limb.elbow.rotation.x = -.14 - .52 * run - .38 * low - move * (forwardSwing * .35 + backSwing * .06) * swingMul
           - (.075 - limb.side * .022) * rest;
+        if (sit > .004) {
+          limb.arm.rotation.x = lerp(limb.arm.rotation.x, (benchSit ? -.50 : -.62) + .012 * inhale, sit);
+          limb.arm.rotation.z = lerp(limb.arm.rotation.z, limb.side * (benchSit ? .085 : .13), sit);
+          limb.arm.rotation.y = lerp(limb.arm.rotation.y, -limb.side * .14, sit);
+          limb.elbow.rotation.x = lerp(limb.elbow.rotation.x, benchSit ? -.68 : -.56, sit);
+        }
+        if (limb.side === 1) {
+          const uo = person.umbrellaOpen ?? 0;
+          const lo = person.lanternOpen ?? 0;
+          if (uo > .04) {
+            limb.arm.rotation.x = lerp(limb.arm.rotation.x, -.28, uo);
+            limb.arm.rotation.y = lerp(limb.arm.rotation.y, -.24, uo);
+            limb.arm.rotation.z = lerp(limb.arm.rotation.z, .03, uo);
+            limb.elbow.rotation.x = lerp(limb.elbow.rotation.x, -1.68, uo);
+          } else if (lo > .04) {
+            limb.arm.rotation.x = lerp(limb.arm.rotation.x, -.34 + Math.sin(phase) * .06 * move, lo);
+            limb.arm.rotation.y = lerp(limb.arm.rotation.y, -.06, lo);
+            limb.arm.rotation.z = lerp(limb.arm.rotation.z, .04, lo);
+            limb.elbow.rotation.x = lerp(limb.elbow.rotation.x, -.76, lo);
+          }
+        }
+        if (limb.side === -1 && person.waving && !fleeing && !crouching && !reaction) {
+          const waveT = (env?.clock ?? 0) * 6.8 + (person.breath ?? 0);
+          limb.arm.rotation.x = -2.42 + Math.sin(waveT) * .10;
+          limb.arm.rotation.y = .14;
+          limb.arm.rotation.z = -.32 + Math.sin(waveT) * .28;
+          limb.elbow.rotation.x = -.48 - Math.sin(waveT) * .20;
+        }
       }
       if (person.distant) {
         if (reaction || person.streetPose) poseStreetReaction(person);
@@ -3318,6 +3476,7 @@
     ];
     let ctx, master, engine, sub, engineVolume, filter;
     let noiseBuffer;
+    let ambSrc, ambLowFilter, ambHighFilter, ambLowGain, ambHighGain, ambBus;
     let enabled = true;
     let station = -1;
     let nextBeat = 0;
@@ -3325,6 +3484,11 @@
     let tapeId = '';
     let tapeNext = 0;
     let tapeStep = 0;
+    const AMBIENT_IDS = ['lake', 'tea', 'temple', 'rain', 'off'];
+    let ambientId = 'off';
+    let ambientGainValue = 0;
+    let ambientPulseNext = 0;
+    let ambientPulseStep = 0;
     const midi = note => 440 * 2 ** ((note - 69) / 12);
     function start() {
       if (!Context) return;
@@ -3339,6 +3503,27 @@
           const ch = noiseBuffer.getChannelData(0);
           const nrng = D.rng(49107);
           for (let i = 0; i < nLen; i++) ch[i] = nrng() * 2 - 1;
+          ambSrc = ctx.createBufferSource();
+          ambSrc.buffer = noiseBuffer;
+          ambSrc.loop = true;
+          ambLowFilter = ctx.createBiquadFilter();
+          ambLowFilter.type = 'bandpass';
+          ambLowFilter.frequency.value = 320;
+          ambLowFilter.Q.value = .9;
+          ambHighFilter = ctx.createBiquadFilter();
+          ambHighFilter.type = 'bandpass';
+          ambHighFilter.frequency.value = 1600;
+          ambHighFilter.Q.value = 1.1;
+          ambLowGain = ctx.createGain();
+          ambHighGain = ctx.createGain();
+          ambBus = ctx.createGain();
+          ambLowGain.gain.value = 0;
+          ambHighGain.gain.value = 0;
+          ambBus.gain.value = 0;
+          ambSrc.connect(ambLowFilter).connect(ambLowGain).connect(ambBus);
+          ambSrc.connect(ambHighFilter).connect(ambHighGain).connect(ambBus);
+          ambBus.connect(master);
+          ambSrc.start();
           engineVolume = ctx.createGain();
           engineVolume.gain.value = 0;
           filter = ctx.createBiquadFilter();
@@ -3554,12 +3739,120 @@
       step = 0;
       return tracks[station]?.name ?? '';
     }
+    function setAmbient(id) {
+      const next = AMBIENT_IDS.includes(id) ? id : 'off';
+      ambientId = next;
+      ambientPulseNext = 0;
+      if (next !== 'off') {
+        start();
+      } else {
+        ambientGainValue = 0;
+        if (ctx && ambBus) ambBus.gain.setTargetAtTime(0, ctx.currentTime, .14);
+      }
+      return ambientId;
+    }
+    function scheduleAmbientPulse(id, at, idx, level) {
+      if (level <= .02) return 1.5;
+      switch (id) {
+        case 'lake': {
+          noiseBurst(460 + (idx % 4) * 95, 1.5, 1.15, .024 * level, at, 'bandpass');
+          if (idx % 3 === 0) noiseBurst(1180, 1.8, .9, .010 * level, at + .22, 'bandpass');
+          return 2.4 + (idx % 3) * .65;
+        }
+        case 'tea': {
+          const bubbleFreq = 920 + ((idx * 197) % 520);
+          tone(bubbleFreq, .06, .012 * level, 'sine', at, bubbleFreq * 1.18);
+          if (idx % 2 === 0) noiseBurst(2700 + (idx % 3) * 320, 1.8, .48, .014 * level, at + .14, 'bandpass');
+          if (idx % 4 === 2) {
+            tone(2640, .14, .016 * level, 'sine', at + .32, 2610);
+            tone(3960, .09, .007 * level, 'sine', at + .325, 3920);
+          }
+          return 1.35 + (idx % 3) * .45;
+        }
+        case 'temple': {
+          noiseBurst(520 + (idx % 3) * 140, 1.3, 1.65, .018 * level, at, 'bandpass');
+          if (idx % 2 === 0) {
+            const notes = [392, 440, 523.25, 587.33, 659.25];
+            bellStrike(notes[(idx >> 1) % notes.length], .024 * level, at + .18, 2.35);
+          }
+          return 2.8 + (idx % 3) * .85;
+        }
+        case 'rain': {
+          const dropFreq = 880 + ((idx * 173) % 620);
+          tone(dropFreq, .072, .019 * level, 'sine', at, dropFreq * 1.32);
+          if (idx % 3 === 0) tone(dropFreq * .78, .06, .013 * level, 'sine', at + .21, dropFreq * 1.04);
+          return .56 + (idx % 4) * .16;
+        }
+        default:
+          return 1.8;
+      }
+    }
+    function tickAmbient(state, moment, isDriving) {
+      const active = !state.paused && enabled && ambientId !== 'off';
+      const duck = tapeId ? .42 : (isDriving && station >= 0 ? .35 : 1);
+      const rainScale = ambientId === 'rain' && (state.rain ?? 0) > .4 ? .55 : 1;
+      const targetGain = active ? duck * rainScale : 0;
+      ambientGainValue = targetGain;
+      if (!ambBus) return;
+      ambBus.gain.setTargetAtTime(targetGain, moment, active ? .30 : .14);
+      if (!active) {
+        ambientPulseNext = 0;
+        return;
+      }
+      const clk = state.clock ?? moment;
+      if (ambientId === 'lake') {
+        const tide = .5 + .5 * Math.sin(clk * .42);
+        if (ambLowFilter.type !== 'bandpass') ambLowFilter.type = 'bandpass';
+        if (ambHighFilter.type !== 'bandpass') ambHighFilter.type = 'bandpass';
+        ambLowFilter.frequency.setTargetAtTime(240 + tide * 190, moment, .25);
+        ambLowFilter.Q.setTargetAtTime(.75, moment, .25);
+        ambLowGain.gain.setTargetAtTime(.13 + tide * .08, moment, .25);
+        ambHighFilter.frequency.setTargetAtTime(920 + tide * 420, moment, .25);
+        ambHighFilter.Q.setTargetAtTime(1.1, moment, .25);
+        ambHighGain.gain.setTargetAtTime(.032 + tide * .025, moment, .25);
+      } else if (ambientId === 'tea') {
+        const simmer = .5 + .5 * Math.sin(clk * 1.15);
+        if (ambLowFilter.type !== 'bandpass') ambLowFilter.type = 'bandpass';
+        if (ambHighFilter.type !== 'bandpass') ambHighFilter.type = 'bandpass';
+        ambLowFilter.frequency.setTargetAtTime(310 + simmer * 70, moment, .22);
+        ambLowFilter.Q.setTargetAtTime(1.35, moment, .22);
+        ambLowGain.gain.setTargetAtTime(.11 + simmer * .03, moment, .22);
+        ambHighFilter.frequency.setTargetAtTime(2450 + simmer * 550, moment, .22);
+        ambHighFilter.Q.setTargetAtTime(1.5, moment, .22);
+        ambHighGain.gain.setTargetAtTime(.042 + simmer * .018, moment, .22);
+      } else if (ambientId === 'temple') {
+        const breath = .5 + .5 * Math.sin(clk * .28);
+        if (ambLowFilter.type !== 'bandpass') ambLowFilter.type = 'bandpass';
+        if (ambHighFilter.type !== 'bandpass') ambHighFilter.type = 'bandpass';
+        ambLowFilter.frequency.setTargetAtTime(340 + breath * 170, moment, .30);
+        ambLowFilter.Q.setTargetAtTime(1.0, moment, .30);
+        ambLowGain.gain.setTargetAtTime(.11 + breath * .06, moment, .30);
+        ambHighFilter.frequency.setTargetAtTime(1380 + breath * 360, moment, .30);
+        ambHighFilter.Q.setTargetAtTime(1.6, moment, .30);
+        ambHighGain.gain.setTargetAtTime(.026 + breath * .018, moment, .30);
+      } else if (ambientId === 'rain') {
+        const gust = .5 + .5 * Math.sin(clk * .55);
+        if (ambLowFilter.type !== 'lowpass') ambLowFilter.type = 'lowpass';
+        if (ambHighFilter.type !== 'bandpass') ambHighFilter.type = 'bandpass';
+        ambLowFilter.frequency.setTargetAtTime(620 + gust * 140, moment, .24);
+        ambLowFilter.Q.setTargetAtTime(.7, moment, .24);
+        ambLowGain.gain.setTargetAtTime(.10 + gust * .025, moment, .24);
+        ambHighFilter.frequency.setTargetAtTime(1850 + gust * 380, moment, .24);
+        ambHighFilter.Q.setTargetAtTime(.65, moment, .24);
+        ambHighGain.gain.setTargetAtTime(.075 + gust * .022, moment, .24);
+      }
+      if (ambientPulseNext < moment - .15) ambientPulseNext = moment + .25;
+      if (ambientPulseNext <= moment + .18) {
+        const gap = scheduleAmbientPulse(ambientId, ambientPulseNext, ambientPulseStep++, targetGain);
+        ambientPulseNext += Math.max(.35, gap);
+      }
+    }
     function tick(state) {
       if (!ctx) return;
       const moment = ctx.currentTime;
       const speed = state.car?.speed ?? 0;
       const atSea = state.car?.type === 'boat';
-      const isDriving = !state.paused && state.car;
+      const isDriving = !state.paused && state.car && !state.engineOff;
       const engLv = state.car?.upgradeStats?.engineLevel ?? 0;
       const pitchBoost = 1 + engLv * .075;
       engine.frequency.setTargetAtTime(atSea ? 30 + speed * 2.8 + (state.throttle ? 12 : 0)
@@ -3567,6 +3860,7 @@
       sub.frequency.setTargetAtTime((24 + speed * (atSea ? 1.48 : 1.14)) * (1 + engLv * .04), moment, .12);
       engineVolume.gain.setTargetAtTime(isDriving ? .13 + D.clamp(speed / 45, 0, 1) * (.20 + engLv * .018) : 0, moment, .08);
       filter.frequency.setTargetAtTime(110 + engLv * 48 + speed * (atSea ? 11 : 7.4) + (state.throttle ? 72 + engLv * 22 : 0), moment, .10);
+      tickAmbient(state, moment, isDriving);
       if (!state.paused && enabled && tapeId) {
         if (tapeNext < moment - .15) tapeNext = moment + .02;
         while (tapeNext <= moment + .18) {
@@ -3593,7 +3887,9 @@
         nextBeat += length;
       }
     }
-    return { start, tick, toggleStation, setEnabled, playTape, stopTape, playTapePreview, horn, streetSizzle, templeChime,
+    return { start, tick, toggleStation, setEnabled, playTape, stopTape, playTapePreview, horn, streetSizzle, templeChime, setAmbient,
+      getAmbient: () => ambientId,
+      getAmbientGain: () => ambientGainValue,
       activeTape: () => tapeId,
       bellChime: (strikes = 2) => { if (ctx && enabled) { for (let i = 0; i < strikes; i++) bellStrike(220, .085, ctx.currentTime + i * 1.05, 1.8); } },
       proximityPing: () => { if (ctx && enabled) { tone(1318, .28, .032, 'sine'); tone(1760, .34, .022, 'sine', ctx.currentTime + .09); } },

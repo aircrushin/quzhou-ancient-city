@@ -9,7 +9,7 @@
   const { BOUNDS, MARINE, WORKSHOP, WEATHER, VEHICLE_ORDER, VEHICLE_META, UPGRADE_TREE, VISUAL_CATALOG, normalizeGarage, computeCarStats, clamp, distance } = D;
 
   function readProgress() {
-    const defaults = { cash: 320, deliveries: 0, visitedLandmarks: [], tapes: [], photos: [], spots: [], raceBest: 0, lakeRaceBest: 0, favoriteCar: 'coupe', taxi: { trips: 0, earned: 0, best: 0 }, garage: normalizeGarage(null), graphics: 'auto', touch: 'auto',
+    const defaults = { cash: 320, deliveries: 0, visitedLandmarks: [], tapes: [], photos: [], spots: [], eventsDone: 0, raceBest: 0, lakeRaceBest: 0, favoriteCar: 'coupe', taxi: { trips: 0, earned: 0, best: 0 }, garage: normalizeGarage(null), graphics: 'auto', touch: 'auto',
       lookGain: 'normal', mouseSensitivity: 100, touchSensitivity: 100, sound: true, reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches };
     try {
       const raw = JSON.parse(localStorage.getItem(SAVE_KEY));
@@ -23,6 +23,7 @@
         tapes: Array.isArray(raw.tapes) ? [...new Set(raw.tapes.filter(id => typeof id === 'string'))] : [],
         photos: Array.isArray(raw.photos) ? [...new Set(raw.photos.filter(id => typeof id === 'string'))] : [],
         spots: Array.isArray(raw.spots) ? [...new Set(raw.spots.filter(id => typeof id === 'string'))] : [],
+        eventsDone: Number.isSafeInteger(raw.eventsDone) && raw.eventsDone >= 0 ? raw.eventsDone : 0,
         raceBest: Number.isFinite(raw.raceBest) && raw.raceBest > 0 ? Math.round(raw.raceBest * 100) / 100 : 0,
         lakeRaceBest: Number.isFinite(raw.lakeRaceBest) && raw.lakeRaceBest > 0 ? Math.round(raw.lakeRaceBest * 100) / 100 : 0,
         favoriteCar: ['hatch', 'coupe', 'sedan', 'van'].includes(raw.favoriteCar) ? raw.favoriteCar : 'coupe',
@@ -85,7 +86,7 @@
   const photoHoldCodes = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'ShiftLeft', 'ShiftRight']);
   let sim, panel = null, helpFrom = null, restoreFocus = null, view = 'title', booting = false, last = 0, hudRefresh = 0, radarRefresh = 0;
   const workshopState = { kind: 'taxi', tab: 'performance', drag: null };
-  const photoState = { drag: null, uiHidden: false, flashTimer: 0 };
+  const photoState = { drag: null, uiHidden: false, flashTimer: 0, bannerUntil: 0 };
   let graphicsState = 'ok', graphicsRetried = false, resizePending = false;
   let landscapeRequested = false, orientationAttempted = false;
   let mouseLook = false, mousePosition = null;
@@ -235,6 +236,7 @@
     }
     if (kind === 'photo') {
       photoState.uiHidden = false;
+      photoState.bannerUntil = 0;
       shells.photo.classList.remove('ui-hidden');
       if ($('photo-show-ui-btn')) $('photo-show-ui-btn').hidden = true;
       sim.setPhotoMode(true);
@@ -263,6 +265,7 @@
     }
     if (closing === 'photo' && sim) {
       photoState.drag = null;
+      photoState.bannerUntil = 0;
       scene.style.filter = '';
       shells.photo.classList.remove('ui-hidden');
       if ($('photo-show-ui-btn')) $('photo-show-ui-btn').hidden = true;
@@ -298,8 +301,27 @@
     centerX: mapFrame.left + mapFrame.width / 2,
     centerZ: mapFrame.top + mapFrame.height / 2,
     hoveredId: null,
+    hoveredRestId: null,
     drag: null,
   };
+  function restAmbientLabel(id) {
+    const found = D.REST_AMBIENTS?.find(item => item.id === id);
+    return found ? found.name : '氛围静音';
+  }
+  function hitTestRestSpot(metrics, px, py, radiusPx) {
+    if (!sim || sim.state.race?.active || !D.REST_SPOTS?.length) return null;
+    let best = null;
+    let bestDist = radiusPx;
+    for (const spot of D.REST_SPOTS) {
+      const [rx, ry] = metrics.view(spot);
+      const d = Math.hypot(px - rx, py - ry);
+      if (d <= bestDist) {
+        bestDist = d;
+        best = spot;
+      }
+    }
+    return best ? { ...best, kind: 'restSpot' } : null;
+  }
   function clampAtlasCenter() {
     const halfW = mapFrame.width * 0.5;
     const halfH = mapFrame.height * 0.5;
@@ -330,8 +352,10 @@
     if (!atlasTooltip) return;
     if (!lm || tmapMode) {
       atlasTooltip.hidden = true;
+      delete atlasTooltip.dataset.kind;
       return;
     }
+    atlasTooltip.dataset.kind = lm.kind || 'landmark';
     if (lm.kind === 'tape') {
       titleFor($('atlas-tip-name'), lm.name);
       titleFor($('atlas-tip-badge'), '声景磁带');
@@ -353,6 +377,14 @@
         ? '驾驶衢江快艇环绕严家淤岛，金杯 ≤ 48 秒 · 个人最佳 ' + progress.lakeRaceBest.toFixed(2) + ' 秒'
         : '驾驶衢江快艇环绕严家淤岛穿过 7 道水上浮标门，金杯 ≤ 48 秒');
       titleFor($('atlas-tip-hint'), '点击立即乘快艇发起信安湖水上计时赛');
+    } else if (lm.kind === 'restSpot') {
+      titleFor($('atlas-tip-name'), lm.name);
+      titleFor($('atlas-tip-badge'), '憩息 · ' + restAmbientLabel(lm.ambient));
+      titleFor($('atlas-tip-desc'), lm.poem || '');
+      const canTravel = sim && sim.state.mode !== 'taxi' && !sim.state.race?.active;
+      titleFor($('atlas-tip-hint'), canTravel
+        ? '点击一键传送并落座小憩（右键导航前往）'
+        : '切回自由探索模式后可传送落座小憩');
     } else {
       titleFor($('atlas-tip-name'), lm.name);
       titleFor($('atlas-tip-badge'), lm.badge || '古城地标');
@@ -590,17 +622,17 @@
     ctx.stroke();
     ctx.fill();
   }
-  function destinationRing(ctx, x, y, radius) {
+  function destinationRing(ctx, x, y, radius, ink = routeInk) {
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fillStyle = '#1c382e';
     ctx.fill();
-    ctx.strokeStyle = routeInk;
+    ctx.strokeStyle = ink;
     ctx.lineWidth = radius * .27;
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(x, y, radius * .32, 0, Math.PI * 2);
-    ctx.fillStyle = routeInk;
+    ctx.fillStyle = ink;
     ctx.fill();
   }
   function navigation(from, aim) {
@@ -763,16 +795,18 @@
       ctx.fillRect(wx - 4 * pr, wz - 4 * pr, 8 * pr, 8 * pr);
     }
     if (aim) {
+      const aimInk = aim.streetEvent ? (isLarge && Atlas ? '#d45a28' : '#ff9e6d')
+        : (isLarge && Atlas ? atlasRouteInk : routeInk);
       path(ctx, route, view, isLarge ? 6.8 * pr : 9, isLarge && Atlas ? 'rgba(255, 249, 233, 0.9)' : '#1b3c30e6');
-      path(ctx, route, view, isLarge ? 3.8 * pr : 5, isLarge && Atlas ? atlasRouteInk : routeInk, aim.marine ? [5 * pr, 4 * pr] : []);
+      path(ctx, route, view, isLarge ? 3.8 * pr : 5, aimInk, aim.marine ? [5 * pr, 4 * pr] : []);
       const [x, y] = view(aim);
-      if (isLarge) destinationRing(ctx, x, y, 10 * pr);
+      if (isLarge) destinationRing(ctx, x, y, 10 * pr, aimInk);
       else {
         const dx = x - width / 2;
         const dy = y - height / 2;
         const pull = Math.min(1, (width / 2 - 15) / Math.max(.1, Math.abs(dx)),
           (height / 2 - 15) / Math.max(.1, Math.abs(dy)));
-        destinationRing(ctx, width / 2 + dx * pull, height / 2 + dy * pull, 10.5);
+        destinationRing(ctx, width / 2 + dx * pull, height / 2 + dy * pull, 10.5, aimInk);
       }
     }
     if (isLarge) {
@@ -797,6 +831,98 @@
         if (tx < -12 || tx > width + 12 || ty < -12 || ty > height + 12) continue;
         const targeted = tape.id === activeTapeId;
         diamond(ctx, tx, ty, (isLarge ? (targeted ? 7.2 : 5.4) * pr : (targeted ? 6.2 : 4.6)), targeted ? '#ffc2e0' : '#f59cc6', '#2b1522');
+      }
+    }
+    if (!sim.state.race?.active && D.REST_SPOTS?.length) {
+      const restTabActive = isLarge && mapCollectionTab === 'rests';
+      const activeRestId = sim.state.rest?.spot?.id || null;
+      for (const spot of D.REST_SPOTS) {
+        const [rx, ry] = view(spot);
+        if (rx < -12 || rx > width + 12 || ry < -12 || ry > height + 12) continue;
+        const isHover = isLarge && atlasState.hoveredRestId === spot.id;
+        const isSeated = isLarge && activeRestId === spot.id;
+        const r = isLarge ? ((isHover || isSeated ? 7.4 : restTabActive ? 6.2 : 5.0) * pr) : 3.9;
+        ctx.save();
+        if (isLarge && (isHover || isSeated || restTabActive)) {
+          ctx.beginPath();
+          ctx.arc(rx, ry, r + (isHover || isSeated ? 5.2 : 3.4) * pr, 0, Math.PI * 2);
+          ctx.fillStyle = isHover || isSeated ? 'rgba(126, 226, 198, 0.36)' : 'rgba(126, 226, 198, 0.22)';
+          ctx.fill();
+          ctx.strokeStyle = isHover || isSeated ? 'rgba(255, 241, 189, 0.92)' : 'rgba(126, 226, 198, 0.72)';
+          ctx.lineWidth = (isHover || isSeated ? 1.8 : 1.1) * pr;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(rx, ry, r, 0, Math.PI * 2);
+        ctx.fillStyle = isHover || isSeated ? '#a8fae2' : '#7ee2c6';
+        ctx.strokeStyle = '#122923';
+        ctx.lineWidth = isLarge ? (isHover || isSeated ? 2.0 : 1.5) * pr : 1.4;
+        ctx.fill();
+        ctx.stroke();
+        if (isHover || isSeated) {
+          ctx.beginPath();
+          ctx.arc(rx, ry, 2.3 * pr, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff5cf';
+          ctx.fill();
+          if (!atlasTooltip || atlasTooltip.hidden || atlasTooltip.dataset.kind !== 'restSpot') {
+            const tag = language.t(spot.name);
+            ctx.font = '700 ' + (10.5 * pr) + 'px "Microsoft YaHei UI", sans-serif';
+            const padX = 7 * pr;
+            const tw = ctx.measureText(tag).width + padX * 2;
+            const th = 19 * pr;
+            const bx = clamp(rx - tw / 2, 8 * pr, width - tw - 8 * pr);
+            const by = clamp(ry - r - th - 6 * pr, 8 * pr, height - th - 8 * pr);
+            ctx.beginPath();
+            roundedRect(ctx, bx, by, tw, th, 4 * pr);
+            ctx.fillStyle = 'rgba(13, 32, 30, 0.92)';
+            ctx.strokeStyle = 'rgba(126, 226, 198, 0.88)';
+            ctx.lineWidth = 1.2 * pr;
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#effcf7';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tag, bx + tw / 2, by + th / 2 + .5 * pr);
+          }
+        }
+        ctx.restore();
+      }
+    }
+    if (sim.state.mode === 'roam' && !sim.state.race?.active && sim.state.streetEvent) {
+      const ev = sim.state.streetEvent;
+      if (ev.phase === 'offered' || ev.phase === 'needCar') {
+        let [ex, ey] = view(ev);
+        const dEv = distance(p, ev);
+        let showPin = ex >= -14 && ex <= width + 14 && ey >= -14 && ey <= height + 14;
+        if (!isLarge && !showPin && dEv < 230) {
+          const dx = ex - width / 2;
+          const dy = ey - height / 2;
+          const pull = Math.min(1, (width / 2 - 14) / Math.max(.1, Math.abs(dx)), (height / 2 - 14) / Math.max(.1, Math.abs(dy)));
+          ex = width / 2 + dx * pull;
+          ey = height / 2 + dy * pull;
+          showPin = true;
+        }
+        if (showPin) {
+          const r = isLarge ? 8.2 * pr : 7.2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(ex, ey, r + 2.6 * (isLarge ? pr : 1), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 158, 109, 0.28)';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(ex, ey, r, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff9e6d';
+          ctx.strokeStyle = '#26130d';
+          ctx.lineWidth = (isLarge ? 2.0 * pr : 1.8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.font = '800 ' + (isLarge ? 10.5 * pr : 10) + 'px "Microsoft YaHei UI", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#1f0e08';
+          ctx.fillText('!', ex, ey + .5);
+          ctx.restore();
+        }
       }
     }
     if (sim.state.mode === 'roam') {
@@ -956,6 +1082,7 @@
     if ($('tab-landmarks-count')) $('tab-landmarks-count').textContent = sum.lmDone + '/' + sum.lmTotal;
     if ($('tab-tapes-count')) $('tab-tapes-count').textContent = sum.tapeDone + '/' + sum.tapeTotal;
     if ($('tab-photos-count')) $('tab-photos-count').textContent = sum.photoDone + '/' + sum.photoTotal;
+    if ($('tab-rests-count')) $('tab-rests-count').textContent = String(D.REST_SPOTS?.length ?? 0);
     for (const tabBtn of document.querySelectorAll('#map-collection-tabs [data-col-tab]')) {
       tabBtn.setAttribute('aria-selected', String(tabBtn.dataset.colTab === mapCollectionTab));
     }
@@ -1086,6 +1213,74 @@
             }
           });
           card.append(info, act);
+          landmarkWrap.append(card);
+        }
+      } else if (mapCollectionTab === 'rests' && D.REST_SPOTS?.length) {
+        const seatedId = sim.state.rest?.spot?.id || '';
+        const disabled = Boolean(isTaxi || sim.state.race?.active);
+        for (const spot of D.REST_SPOTS) {
+          const here = seatedId === spot.id;
+          const card = document.createElement('div');
+          card.className = 'map-archive-card is-rest' + (here ? ' is-resting-here' : '');
+          card.addEventListener('mouseenter', () => {
+            atlasState.hoveredRestId = spot.id;
+            drawMap(map, true);
+          });
+          card.addEventListener('mouseleave', () => {
+            if (atlasState.hoveredRestId === spot.id) {
+              atlasState.hoveredRestId = null;
+              drawMap(map, true);
+            }
+          });
+          const info = document.createElement('div');
+          info.className = 'map-archive-info';
+          info.addEventListener('click', () => {
+            atlasState.centerX = spot.x;
+            atlasState.centerZ = spot.z;
+            atlasState.zoom = Math.max(atlasState.zoom, 1.5);
+            atlasState.hoveredRestId = spot.id;
+            clampAtlasCenter();
+            drawMap(map, true);
+          });
+          const titleEl = document.createElement('strong');
+          titleFor(titleEl, spot.name);
+          const metaEl = document.createElement('small');
+          metaEl.className = 'map-rest-meta';
+          titleFor(metaEl, spot.district + ' · ' + restAmbientLabel(spot.ambient));
+          const descEl = document.createElement('small');
+          titleFor(descEl, spot.poem);
+          info.append(titleEl, metaEl, descEl);
+          const actions = document.createElement('div');
+          actions.className = 'map-rest-actions';
+          const tpBtn = document.createElement('button');
+          tpBtn.type = 'button';
+          tpBtn.className = 'map-archive-btn is-rest-tp';
+          tpBtn.dataset.restTp = spot.id;
+          titleFor(tpBtn, here ? '正在此处' : '小憩传送');
+          tpBtn.disabled = disabled;
+          tpBtn.addEventListener('click', event => {
+            event.stopPropagation();
+            if (sim.fastTravelToRestSpot?.(spot)) {
+              closePanel();
+              drawHud();
+              drawMap(radar, false);
+            }
+          });
+          const navBtn = document.createElement('button');
+          navBtn.type = 'button';
+          navBtn.className = 'map-archive-btn is-rest-nav';
+          titleFor(navBtn, '导航');
+          navBtn.disabled = disabled;
+          navBtn.addEventListener('click', event => {
+            event.stopPropagation();
+            if (sim.setRestSpotTarget?.(spot)) {
+              closePanel();
+              drawHud();
+              drawMap(radar, false);
+            }
+          });
+          actions.append(tpBtn, navBtn);
+          card.append(info, actions);
           landmarkWrap.append(card);
         }
       }
@@ -1604,16 +1799,20 @@
   const role = {
     district: $('district-name'), time: $('city-time'), weather: $('city-weather'), cash: $('cash'), card: $('job-card'), cardKind: $('job-kind'), cardTitle: $('job-title'),
     cardTask: $('job-task'), cardMeta: $('job-meta'),
-    exploreStrip: $('explore-strip'), exploreLandmarks: $('explore-landmarks'), exploreTapes: $('explore-tapes'), explorePhotos: $('explore-photos'), exploreRace: $('explore-race'),
+    exploreStrip: $('explore-strip'), exploreLandmarks: $('explore-landmarks'), exploreTapes: $('explore-tapes'), explorePhotos: $('explore-photos'), exploreEvents: $('explore-events'), exploreRace: $('explore-race'),
     tapeNowPlaying: $('tape-now-playing'), tapePlayingName: $('tape-playing-name'),
     buffPill: $('buff-pill'), buffIcon: $('buff-icon'), buffName: $('buff-name'), buffTime: $('buff-time'),
     raceHud: $('race-hud'), raceTag: $('race-hud-tag'), raceTimer: $('race-timer'), raceGate: $('race-gate'), raceBest: $('race-best'),
     driftHud: $('drift-hud'), driftLabel: $('drift-label'), driftScore: $('drift-score'), driftFill: $('drift-fill'), driftBonus: $('drift-bonus'),
     roadGuide: $('road-guide'), roadMark: $('road-guide-mark'), roadAction: $('road-guide-action'), roadDistance: $('road-guide-distance'),
     prompt: $('interaction'), label: $('world-label'), toast: $('toast'), toastKind: $('toast-kind'), toastTitle: $('toast-title'),
+    chatter: $('street-chatter'), chatterWho: $('street-chatter-who'), chatterText: $('street-chatter-text'),
     toastBody: $('toast-body'), radio: $('radio-message'), radioPerson: $('radio-person'), radioLine: $('radio-line'), driving: $('driving'),
     speed: $('speed'), speedFill: $('speed-fill'), unit: $('speed-unit'), gear: $('gear'), model: $('car-model'), grade: $('car-grade'), nitro: $('nitro-fill'), nitroMeter: $('nitro-meter'),
     station: $('station'), vehicleHelp: $('vehicle-help'), carTactile: $('car-tactile'), carLights: $('car-lights'), carHornHint: $('car-horn-hint'),
+    restDock: $('rest-dock'), restBadge: $('rest-badge'), restTitle: $('rest-title'), restMeta: $('rest-meta'), restPoem: $('rest-poem'),
+    restExitLabel: $('rest-exit-label'), restShowUi: $('rest-show-ui-btn'), restTapeBtn: $('rest-tape-btn'),
+    restAmbientBtn: $('rest-ambient-btn'), restAmbientLabel: $('rest-ambient-label'),
   };
   const roadActions = {
     left: ['↰', '左转'], right: ['↱', '右转'], back: ['↶', '调头'], straight: ['↑', '直行'], arrival: ['◆', '即将到达'],
@@ -1653,6 +1852,39 @@
         (isFinal ? '终点冲刺 · ' : '计时门 ' + (s.race.index + 1) + ' · ') + (gate?.street ?? ''),
         '高速穿过计时门回复 35% 氮气，按 Backspace 或点击上方按钮终止。',
         distanceText, isFinal,
+      ];
+    }
+    if (s.streetEvent && (s.streetEvent.phase === 'active' || s.streetEvent.phase === 'needCar')) {
+      const ev = s.streetEvent;
+      const def = ev.def;
+      if (ev.phase === 'needCar') {
+        return [
+          '街头奇遇 · 顺风车', def.name,
+          '请上车或按 V 召车带乘客前往' + def.destName + '（按 Backspace 取消）。',
+          '奖励 ' + sim.cashText(def.reward) + (distanceText ? ' · ' + distanceText : ''), false,
+        ];
+      }
+      if (def.kind === 'photo') {
+        return [
+          '街头奇遇 · 旅拍委托', def.name,
+          '前往' + def.destName + '，按 P 进拍照模式框住地标按空格交稿（按 Backspace 取消）。',
+          '稿费 ' + sim.cashText(def.reward) + (distanceText ? ' · ' + distanceText : ''), false,
+        ];
+      }
+      const left = Math.max(0, Math.ceil(ev.deadline - s.clock));
+      if (def.kind === 'ride') {
+        const task = s.vehicle
+          ? '平稳驶往' + def.destName + '，抵达后减速靠边下车（按 Backspace 取消）。'
+          : '请回到车上继续送乘客前往' + def.destName + '（按 Backspace 取消）。';
+        return [
+          '街头奇遇 · 顺风车', def.name, task,
+          left + ' 秒' + (distanceText ? ' · ' + distanceText : ''), left <= 15,
+        ];
+      }
+      return [
+        '街头奇遇 · 急件配送', def.name,
+        '趁热送达' + def.destName + '，提前送达另获加奖（按 Backspace 取消）。',
+        left + ' 秒' + (distanceText ? ' · ' + distanceText : ''), left <= 15,
       ];
     }
     if (s.workshopGuide) return ['改装工坊', WORKSHOP.label, '沿导航前往' + WORKSHOP.label + '，或按 G 直接打开。', distanceText, false];
@@ -1699,6 +1931,10 @@
         titleFor(role.exploreLandmarks, '八景 ' + progress.visitedLandmarks.length + ' / ' + totalLm);
         titleFor(role.exploreTapes, '磁带 ' + progress.tapes.length + ' / ' + totalTapes);
         if (role.explorePhotos) titleFor(role.explorePhotos, '明信片 ' + progress.photos.length + ' / ' + totalPhotos);
+        if (role.exploreEvents) {
+          show(role.exploreEvents, progress.eventsDone > 0);
+          if (progress.eventsDone > 0) titleFor(role.exploreEvents, '奇遇 ' + progress.eventsDone);
+        }
         const hasRaceRec = progress.raceBest > 0 || progress.lakeRaceBest > 0;
         show(role.exploreRace, hasRaceRec);
         if (progress.raceBest > 0 && progress.lakeRaceBest > 0) {
@@ -1753,8 +1989,10 @@
     }
     const action = sim.context();
     const [kind, name, task, meta, urgent] = jobDetails(s, p);
-    role.card.classList.toggle('is-roaming', s.mode !== 'taxi' && !s.landmarkGuide && !s.tapeGuide && !s.workshopGuide && !s.race?.active);
+    const eventCardActive = Boolean(s.streetEvent && (s.streetEvent.phase === 'active' || s.streetEvent.phase === 'needCar'));
+    role.card.classList.toggle('is-roaming', s.mode !== 'taxi' && !eventCardActive && !s.landmarkGuide && !s.tapeGuide && !s.workshopGuide && !s.race?.active);
     role.card.classList.toggle('taxi-mode', s.mode === 'taxi');
+    role.card.classList.toggle('event-mode', eventCardActive);
     show($('taxi-stats'), s.mode === 'taxi');
     if (s.mode === 'taxi') {
       const service = sim.taxi.state;
@@ -1786,6 +2024,18 @@
       role.label.classList.toggle('race', Boolean(label.workshop || label.race));
       role.label.classList.toggle('tape', Boolean(label.tape));
       role.label.classList.toggle('marine', Boolean(label.marine));
+      role.label.classList.toggle('courier', Boolean(label.streetEvent));
+    }
+    if (role.chatter) {
+      const ch = (!panel && sim.projectChatter) ? sim.projectChatter() : null;
+      show(role.chatter, ch);
+      if (ch) {
+        titleFor(role.chatterWho, ch.who);
+        titleFor(role.chatterText, ch.text);
+        role.chatter.style.setProperty('--chatter-x', ch.x * 100 + '%');
+        role.chatter.style.setProperty('--chatter-y', ch.y * 100 + '%');
+        role.chatter.style.setProperty('--chatter-alpha', ch.alpha.toFixed(2));
+      }
     }
     const note = s.notification;
     show(role.toast, note && s.clock < note.until);
@@ -1802,6 +2052,32 @@
     }
     const boat = s.boat;
     const vehicle = boat ?? s.vehicle;
+    const resting = Boolean(s.rest?.active);
+    const restZen = Boolean(resting && s.rest.uiHidden);
+    hud.classList.toggle('is-resting', resting);
+    hud.classList.toggle('is-rest-zen', restZen);
+    if (role.restDock) {
+      show(role.restDock, resting && !restZen);
+      if (role.restShowUi) show(role.restShowUi, restZen);
+      if (resting) {
+        const r = s.rest;
+        const badgeText = r.kind === 'car' ? '停车赏景' : r.kind === 'boat' ? '泛舟听水' : r.kind === 'bench' ? '观景小憩' : '歇脚小憩';
+        titleFor(role.restBadge, badgeText);
+        titleFor(role.restTitle, r.title);
+        const speedLabel = (r.timeScale || 1) > 1 ? (' · ' + r.timeScale + '×') : '';
+        titleFor(role.restMeta, clockText(s.hour) + ' · ' + WEATHER[s.weather].name + speedLabel);
+        titleFor(role.restPoem, r.poem);
+        if (role.restExitLabel) titleFor(role.restExitLabel, (r.kind === 'car' || r.kind === 'boat') ? '结束赏景' : '起身离开');
+        if (role.restAmbientBtn && role.restAmbientLabel) {
+          const ambId = r.ambient || 'off';
+          role.restAmbientBtn.setAttribute('aria-pressed', String(ambId !== 'off'));
+          titleFor(role.restAmbientLabel, restAmbientLabel(ambId));
+        }
+        for (const btn of role.restDock.querySelectorAll('[data-rest-speed]')) {
+          btn.setAttribute('aria-pressed', String(Number(btn.dataset.restSpeed) === (r.timeScale || 1)));
+        }
+      }
+    }
     show(role.driving, vehicle);
     hud.classList.toggle('is-driving', Boolean(vehicle));
     hud.classList.toggle('is-car-driving', Boolean(s.vehicle && !boat));
@@ -2053,6 +2329,10 @@
     if (!sim || !canControl()) return;
     switch (code) {
       case 'KeyE': {
+        if (sim.state.rest?.active) {
+          sim.exitRestMode?.(false);
+          break;
+        }
         const nearby = sim.context();
         if (nearby && sim.handleInteraction(nearby) === 'workshop') {
           openPanel('workshop');
@@ -2060,6 +2340,9 @@
         }
         break;
       }
+      case 'KeyZ':
+        sim.toggleRestMode?.();
+        break;
       case 'KeyG': openPanel('workshop'); return;
       case 'KeyM': openPanel('map'); return;
       case 'KeyP': openPanel('photo'); return;
@@ -2067,7 +2350,10 @@
       case 'KeyC': flushLook(); sim.cycleCamera(); return;
       case 'KeyF': sim.navigateNearestUnvisited?.(); break;
       case 'KeyT': sim.cycleCollectedTape?.(); break;
-      case 'KeyH': sim.honkHorn?.(); break;
+      case 'KeyH':
+        if (sim.state.rest?.active) sim.toggleRestUi?.();
+        else sim.honkHorn?.();
+        break;
       case 'KeyL': sim.toggleVehicleLights?.(); break;
       case 'KeyN': sim.switchTime(); break;
       case 'KeyR': sim.toggleStation(); break;
@@ -2091,6 +2377,7 @@
       if (event.repeat) return;
       if (panel === 'pause' && !$('look-controls').hidden) { showLookDetails(false); $('look-open').focus(); }
       else if (panel) closePanel();
+      else if (view === 'game' && sim?.state?.rest?.active) { sim.exitRestMode?.(false); drawHud(); }
       else if (view === 'game') openPanel('pause');
       else if (!booting) openLanguagePicker();
       return;
@@ -2142,10 +2429,25 @@
       drawMap(radar, false);
       return;
     }
+    if (code === 'Backspace' && !event.repeat && (sim?.state?.streetEvent?.phase === 'active' || sim?.state?.streetEvent?.phase === 'needCar')) {
+      event.preventDefault();
+      sim.cancelStreetEvent?.();
+      drawHud();
+      drawMap(radar, false);
+      return;
+    }
     if (holdCodes.has(code)) {
       event.preventDefault();
       keyboard.add(code);
-    } else if (!event.repeat && ['KeyE', 'KeyF', 'KeyG', 'KeyM', 'KeyP', 'KeyT', 'KeyV', 'KeyC', 'KeyR', 'KeyN', 'KeyX', 'KeyH', 'KeyL'].includes(code)) {
+    } else if (!event.repeat && sim?.state?.rest?.active && ['Digit1', 'Digit2', 'Digit3'].includes(code)) {
+      event.preventDefault();
+      sim.setRestTimeScale?.(code === 'Digit1' ? 1 : code === 'Digit2' ? 15 : 60);
+      drawHud();
+    } else if (!event.repeat && sim?.state?.rest?.active && code === 'KeyB') {
+      event.preventDefault();
+      sim.cycleRestAmbient?.();
+      drawHud();
+    } else if (!event.repeat && ['KeyE', 'KeyF', 'KeyG', 'KeyM', 'KeyP', 'KeyT', 'KeyV', 'KeyC', 'KeyR', 'KeyN', 'KeyX', 'KeyH', 'KeyL', 'KeyZ'].includes(code)) {
       event.preventDefault();
       action(code);
     }
@@ -2238,6 +2540,57 @@
     action('KeyX');
     scene.focus({ preventScroll: true });
   });
+  for (const speedBtn of document.querySelectorAll('[data-rest-speed]')) {
+    speedBtn.addEventListener('click', event => {
+      event.currentTarget.blur();
+      sim?.setRestTimeScale?.(Number(speedBtn.dataset.restSpeed));
+      drawHud();
+      scene.focus({ preventScroll: true });
+    });
+  }
+  $('rest-time-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    action('KeyN');
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-ambient-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    sim?.cycleRestAmbient?.();
+    drawHud();
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-weather-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    action('KeyX');
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-tape-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    action('KeyT');
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-photo-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    action('KeyP');
+  });
+  $('rest-hide-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    sim?.toggleRestUi?.();
+    drawHud();
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-show-ui-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    sim?.toggleRestUi?.();
+    drawHud();
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-exit-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    sim?.exitRestMode?.(false);
+    drawHud();
+    scene.focus({ preventScroll: true });
+  });
   for (const tabBtn of document.querySelectorAll('[data-workshop-tab]')) {
     tabBtn.addEventListener('click', () => {
       workshopState.tab = tabBtn.dataset.workshopTab;
@@ -2292,21 +2645,27 @@
     const badge = $('photo-subject-badge');
     if (!badge || !sim) return;
     if (customBanner) {
+      photoState.bannerUntil = performance.now() + 2800;
       badge.hidden = false;
       badge.classList.add('is-done');
+      badge.classList.remove('is-event');
       titleFor(badge, customBanner);
       return;
     }
+    if (performance.now() < photoState.bannerUntil) return;
     const sub = sim.photo.subject ?? sim.checkPhotoSubject?.();
     if (!sub) {
       badge.hidden = true;
       return;
     }
     badge.hidden = false;
-    badge.classList.toggle('is-done', sub.completed);
-    titleFor(badge, sub.completed
-      ? '✓ 已入册：' + sub.spot.name
-      : '✦ 取景锁定：' + sub.spot.name + ' · 空格打卡 +¥120');
+    badge.classList.toggle('is-event', Boolean(sub.eventMatch));
+    badge.classList.toggle('is-done', !sub.eventMatch && sub.completed);
+    titleFor(badge, sub.eventMatch
+      ? '✦ 委托取景锁定：' + sub.spot.name + ' · 空格交付 +' + sim.cashText(sub.eventMatch.reward)
+      : sub.completed
+        ? '✓ 已入册：' + sub.spot.name
+        : '✦ 取景锁定：' + sub.spot.name + ' · 空格打卡 +¥120');
   }
   function syncPhotoUi() {
     if (!sim) return;
@@ -2377,7 +2736,10 @@
       link.download = 'quzhou-ancient-city-' + stamp + '.png';
       link.click();
     }
-    if (res?.newlyCompleted && res.framed?.spot) {
+    if (res?.eventCompleted) {
+      syncPhotoSubjectUi('✓ 旅拍委托完成：' + res.eventCompleted.name + ' (+' + sim.cashText(res.eventCompleted.reward) + ')');
+      drawHud();
+    } else if (res?.newlyCompleted && res.framed?.spot) {
       syncPhotoSubjectUi('✓ 明信片打卡成功：' + res.framed.spot.name + ' (+' + sim.cashText(res.reward) + ')');
       drawHud();
     } else {
@@ -2559,7 +2921,8 @@
     }
     if (Atlas) {
       const pt = canvasCoordsFromEvent(event);
-      let hit = Atlas.hitTestLandmark(Y, metrics.view, pt.x, pt.y, 28 * metrics.pr);
+      let hit = hitTestRestSpot(metrics, pt.x, pt.y, (mapCollectionTab === 'rests' ? 20 : 14) * metrics.pr);
+      if (!hit) hit = Atlas.hitTestLandmark(Y, metrics.view, pt.x, pt.y, 28 * metrics.pr);
       if (!hit && sim.state.mode === 'roam' && !sim.state.race?.active && D.TAPES?.length) {
         for (const tape of D.TAPES) {
           if (progress.tapes.includes(tape.id)) continue;
@@ -2582,18 +2945,21 @@
           hit = { id: 'lake-race-start', kind: 'lakeRaceStart' };
         }
       }
-      const nextId = hit && hit.kind !== 'tape' && hit.kind !== 'raceStart' && hit.kind !== 'lakeRaceStart' ? hit.id : null;
+      const nextId = hit && hit.kind !== 'tape' && hit.kind !== 'raceStart' && hit.kind !== 'lakeRaceStart' && hit.kind !== 'restSpot' ? hit.id : null;
+      const nextRestId = hit && hit.kind === 'restSpot' ? hit.id : null;
       map.classList.toggle('hover-landmark', Boolean(hit));
       showAtlasTooltip(hit, event.clientX, event.clientY);
-      if (atlasState.hoveredId !== nextId) {
+      if (atlasState.hoveredId !== nextId || atlasState.hoveredRestId !== nextRestId) {
         atlasState.hoveredId = nextId;
+        atlasState.hoveredRestId = nextRestId;
         drawMap(map, true);
       }
     }
   });
   map.addEventListener('pointerleave', () => {
-    if (atlasState.hoveredId) {
+    if (atlasState.hoveredId || atlasState.hoveredRestId) {
       atlasState.hoveredId = null;
+      atlasState.hoveredRestId = null;
       drawMap(map, true);
     }
     map.classList.remove('hover-landmark');
@@ -2608,6 +2974,21 @@
     if (drag.moved || panel !== 'map' || tmapMode || !sim) return;
     const pt = canvasCoordsFromEvent(event);
     const metrics = getAtlasMetrics(map);
+    const restHit = hitTestRestSpot(metrics, pt.x, pt.y, (mapCollectionTab === 'rests' ? 22 : 16) * metrics.pr);
+    if (restHit) {
+      if (sim.state.mode !== 'taxi' && !sim.state.race?.active && sim.fastTravelToRestSpot?.(restHit)) {
+        closePanel();
+        drawHud();
+        drawMap(radar, false);
+      } else {
+        atlasState.centerX = restHit.x;
+        atlasState.centerZ = restHit.z;
+        atlasState.zoom = Math.max(atlasState.zoom, 1.5);
+        clampAtlasCenter();
+        drawMap(map, true);
+      }
+      return;
+    }
     const lm = Atlas?.hitTestLandmark(Y, metrics.view, pt.x, pt.y, 30 * metrics.pr);
     if (lm) {
       if (event.shiftKey && sim.state.mode !== 'taxi' && progress.visitedLandmarks.includes(lm.id) && sim.fastTravelToLandmark?.(lm)) {
@@ -2672,6 +3053,14 @@
     if (panel !== 'map' || tmapMode || !sim || sim.state.mode === 'taxi') return;
     const pt = canvasCoordsFromEvent(event);
     const metrics = getAtlasMetrics(map);
+    const restHit = hitTestRestSpot(metrics, pt.x, pt.y, 22 * metrics.pr);
+    if (restHit && !sim.state.race?.active && sim.setRestSpotTarget?.(restHit)) {
+      event.preventDefault();
+      closePanel();
+      drawHud();
+      drawMap(radar, false);
+      return;
+    }
     const lm = Atlas?.hitTestLandmark(Y, metrics.view, pt.x, pt.y, 32 * metrics.pr);
     if (lm && progress.visitedLandmarks.includes(lm.id) && sim.fastTravelToLandmark?.(lm)) {
       event.preventDefault();
@@ -2869,6 +3258,7 @@
       capturePhotoResult: () => sim?.capturePhotoResult?.(),
       triggerPhotoCapture,
       setMapCollectionTab: tab => { mapCollectionTab = tab; renderMapPanel(); },
+      getAtlasMetrics: () => getAtlasMetrics(map),
     };
   }
   requestAnimationFrame(loop);

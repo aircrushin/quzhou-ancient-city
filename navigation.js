@@ -11,6 +11,7 @@
   const raceColor = '#66f2c7';
   const raceFinalColor = '#ffd663';
   const tapeColor = '#f59cc6';
+  const eventColor = '#ff9e6d';
 
   function roadGuide(car, destination, color = defaultColor) {
     const gap = distance(car, destination);
@@ -103,11 +104,13 @@
       }
       const kind = destination.taxi ? 'taxi'
         : destination.race ? (destination.finalGate ? 'raceFinal' : 'race')
+        : destination.streetEvent ? 'event'
         : destination.tape ? 'tape'
         : destination.workshop ? 'workshop' : 'roam';
       const color = kind === 'taxi' ? taxiColor
         : kind === 'raceFinal' ? raceFinalColor
         : kind === 'race' ? raceColor
+        : kind === 'event' ? eventColor
         : kind === 'tape' ? tapeColor
         : kind === 'workshop' ? workshopColor : defaultColor;
       if (car === previousCar && destination.x === oldX && destination.z === oldZ && lastKind === kind && now >= refreshAt - .181) {

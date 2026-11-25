@@ -33,13 +33,13 @@
     })();
   </script>
   <link rel="stylesheet" href="style.css?v=27">
-  <link rel="stylesheet" href="interface.css?v=18">
+  <link rel="stylesheet" href="interface.css?v=23">
   <script defer src="three.min.js"></script>
   <script defer src="glb-loader.js?v=7"></script>
   <script defer src="quzhou-roads.js?v=2"></script>
   <script defer src="quzhou-landmarks.js?v=4"></script>
   <script defer src="quzhou-atlas.js?v=3"></script>
-  <script defer src="world.js?v=30"></script>
+  <script defer src="world.js?v=35"></script>
   <script defer src="district-architecture.js?v=14"></script>
   <script defer src="warehouse.js?v=5"></script>
   <script defer src="coast.js?v=5"></script>
@@ -48,21 +48,21 @@
   <script defer src="night-market.js?v=13"></script>
   <script defer src="boulevard-art.js?v=17"></script>
   <script defer src="promenade-art.js?v=15"></script>
-  <script defer src="vehicles.js?v=31"></script>
+  <script defer src="vehicles.js?v=36"></script>
   <script defer src="concept-car.js?v=3"></script>
   <script defer src="upgrades.js?v=1"></script>
   <script defer src="boat-art.js?v=7"></script>
   <script defer src="marine.js?v=15"></script>
-  <script defer src="look.js?v=18"></script>
+  <script defer src="look.js?v=20"></script>
   <script defer src="street-render.js?v=20"></script>
-  <script defer src="navigation.js?v=17"></script>
-  <script defer src="english.js?v=14"></script>
+  <script defer src="navigation.js?v=18"></script>
+  <script defer src="english.js?v=20"></script>
   <script defer src="language.js?v=1"></script>
   <script defer src="taxi.js?v=8"></script>
-  <script defer src="traffic.js?v=3"></script>
-  <script defer src="sim.js?v=36"></script>
-  <script defer src="touch.js?v=22"></script>
-  <script defer src="game.js?v=36"></script>
+  <script defer src="traffic.js?v=4"></script>
+  <script defer src="sim.js?v=42"></script>
+  <script defer src="touch.js?v=24"></script>
+  <script defer src="game.js?v=41"></script>
 </head>
 <body>
   <main id="game" aria-label="衢州古城">
@@ -142,7 +142,7 @@
       <div class="hud-leading">
         <div class="hud-left">
           <div class="district"><i class="location-mark" aria-hidden="true"></i><span id="district-name">水亭门古街</span><button id="city-time" class="mono hud-env-btn" type="button" title="点击或按 N 切换时段" aria-label="切换时段">10:30</button><button id="city-weather" class="weather-status hud-env-btn" type="button" title="点击或按 X 切换天气" aria-label="切换天气">晴朗</button></div>
-          <button id="explore-strip" class="explore-strip" type="button" hidden aria-label="古城探索进度，点击打开地图"><span id="explore-landmarks">八景 0 / 8</span><span id="explore-tapes">磁带 0 / 10</span><span id="explore-photos">明信片 0 / 5</span><span id="explore-race" class="mono" hidden></span></button>
+          <button id="explore-strip" class="explore-strip" type="button" hidden aria-label="古城探索进度，点击打开地图"><span id="explore-landmarks">八景 0 / 8</span><span id="explore-tapes">磁带 0 / 10</span><span id="explore-photos">明信片 0 / 5</span><span id="explore-events" hidden>奇遇 0</span><span id="explore-race" class="mono" hidden></span></button>
           <button id="tape-now-playing" class="tape-now-playing" type="button" hidden aria-label="当前播放的声景磁带，点击切换下一卷"><i aria-hidden="true">♪</i><span id="tape-playing-name"></span><small>T 切带</small></button>
           <div id="buff-pill" class="buff-pill" hidden role="status" aria-live="polite"><i id="buff-icon" aria-hidden="true">★</i><strong id="buff-name">热辣加速</strong><span id="buff-time" class="mono">60s</span></div>
           <div id="road-guide" class="road-guide" hidden><span id="road-guide-mark" aria-hidden="true"></span><strong id="road-guide-action"></strong><span id="road-guide-distance" class="mono"></span></div>
@@ -190,6 +190,7 @@
         <button id="race-abort" class="race-abort" type="button" title="终止当前计时赛 (Backspace)">终止计时</button>
       </div>
       <div id="world-label" class="world-label" hidden><b></b><span></span></div>
+      <div id="street-chatter" class="street-chatter" hidden aria-hidden="true"><b id="street-chatter-who"></b><span id="street-chatter-text"></span></div>
       <div class="hud-notices">
         <div id="look-hint" class="look-hint" hidden>
           <div role="status"><span id="look-hint-method"></span><strong id="look-hint-value"></strong></div>
@@ -202,8 +203,35 @@
       </div>
       <div class="desktop-controls" aria-label="操作提示">
         <span><svg viewBox="0 0 16 20" fill="none" aria-hidden="true"><rect x="2.5" y="1.5" width="11" height="17" rx="5.5"/><path d="M8 3v5"/></svg>鼠标环视</span>
-        <span><kbd>C</kbd>机位</span><span class="desktop-interact"><kbd>E</kbd>交互</span><span class="desktop-drive-only"><kbd>H</kbd>鸣笛</span><span class="desktop-car-only"><kbd>L</kbd>车灯</span><span><kbd>F</kbd>寻景</span><span><kbd>T</kbd>声景</span><span class="desktop-walk-only"><kbd>V</kbd>召车</span><span><kbd>P</kbd>拍照</span><span><kbd>N</kbd>昼夜</span><span><kbd>X</kbd>天气</span><span><kbd>G</kbd>工坊</span><span><kbd>M</kbd>地图</span>
+        <span><kbd>C</kbd>机位</span><span class="desktop-interact"><kbd>E</kbd>交互</span><span class="desktop-drive-only"><kbd>H</kbd>鸣笛</span><span class="desktop-car-only"><kbd>L</kbd>车灯</span><span><kbd>F</kbd>寻景</span><span><kbd>T</kbd>声景</span><span><kbd>Z</kbd>憩息</span><span class="desktop-walk-only"><kbd>V</kbd>召车</span><span><kbd>P</kbd>拍照</span><span><kbd>N</kbd>昼夜</span><span><kbd>X</kbd>天气</span><span><kbd>G</kbd>工坊</span><span><kbd>M</kbd>地图</span>
       </div>
+      <div id="rest-dock" class="rest-dock" role="region" aria-label="休息模式观景栏" hidden>
+        <div class="rest-head">
+          <div class="rest-title-group">
+            <span id="rest-badge" class="rest-badge">观景小憩</span>
+            <strong id="rest-title">信安湖亲水木椅</strong>
+            <span id="rest-meta" class="rest-meta mono">10:30 · 晴朗</span>
+          </div>
+          <p id="rest-poem" class="rest-poem"></p>
+        </div>
+        <div class="rest-controls">
+          <div class="rest-speed-group" role="group" aria-label="时光流速">
+            <button type="button" class="rest-chip" data-rest-speed="1" aria-pressed="true">1× 静赏</button>
+            <button type="button" class="rest-chip" data-rest-speed="15" aria-pressed="false">15× 观云</button>
+            <button type="button" class="rest-chip" data-rest-speed="60" aria-pressed="false">60× 逐昼夜</button>
+          </div>
+          <div class="rest-actions">
+            <button id="rest-ambient-btn" class="rest-btn rest-ambient-btn" type="button" aria-pressed="true" title="切换古城白噪音 / 茶香氛围音 (B)"><kbd>B</kbd><span id="rest-ambient-label">湖风细浪</span></button>
+            <button id="rest-time-btn" class="rest-btn" type="button"><kbd>N</kbd><span>时段</span></button>
+            <button id="rest-weather-btn" class="rest-btn" type="button"><kbd>X</kbd><span>天气</span></button>
+            <button id="rest-tape-btn" class="rest-btn" type="button"><kbd>T</kbd><span>声景</span></button>
+            <button id="rest-photo-btn" class="rest-btn" type="button"><kbd>P</kbd><span>拍照</span></button>
+            <button id="rest-hide-btn" class="rest-btn" type="button"><kbd>H</kbd><span>净屏</span></button>
+            <button id="rest-exit-btn" class="rest-btn primary" type="button"><kbd>Z</kbd><span id="rest-exit-label">起身离开</span></button>
+          </div>
+        </div>
+      </div>
+      <button id="rest-show-ui-btn" class="rest-show-ui-btn" type="button" hidden><kbd>H</kbd><span>显示憩息栏</span> · <kbd>Z</kbd><span>起身</span></button>
       <div id="touch" class="touch" role="group" aria-label="触屏控制" data-mode="walk" hidden>
         <button type="button" id="touch-camera" data-touch-action="KeyC" aria-label="切换视角"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M3.5 7.5h5l2-3h6l2 3h6v13h-22z"/><circle cx="14" cy="13.5" r="3.7"/><path d="M19.5 10h2"/></svg></button>
         <div id="touch-move" class="touch-move" role="group" aria-label="移动摇杆，按住方向行走">
@@ -218,6 +246,7 @@
         <div class="touch-actions">
           <div class="touch-quick-bar" role="group" aria-label="快捷操作">
             <button type="button" id="touch-summon" data-touch-action="KeyV" aria-label="一键召车"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4.5 14.5 7 9h14l2.5 5.5v4.5h-2v-1.5h-15V19h-2z"/><circle cx="8.5" cy="15.5" r="1.3"/><circle cx="19.5" cy="15.5" r="1.3"/></svg><span data-touch-label>召车</span></button>
+            <button type="button" id="touch-rest" data-touch-action="KeyZ" aria-label="休息模式"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M5 13h18M7 13v6M21 13v6M7.5 13l-.8-5h14.6l-.8 5"/></svg><span data-touch-label>憩息</span></button>
             <button type="button" id="touch-horn" data-touch-action="KeyH" aria-label="鸣笛" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4.5 10h4.5l7.5-4.5v13L9 14H4.5z"/><path d="M19.5 9.2a4.5 4.5 0 0 1 0 5.6M22 6.8a7.8 7.8 0 0 1 0 10.4"/></svg><span data-touch-label>鸣笛</span></button>
             <button type="button" id="touch-lights" data-touch-action="KeyL" aria-label="切换车灯" aria-pressed="false" hidden><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M5 9.5a5 5 0 0 1 5-4.5h3v14h-3a5 5 0 0 1-5-4.5z"/><path d="M16 7.5h7M16 12h7.5M16 16.5h7"/></svg><span data-touch-label>车灯</span></button>
             <button type="button" id="touch-photo" data-touch-action="KeyP" aria-label="拍照模式"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M4 7.5h4.8l2-2.8h6.4l2 2.8H24v12H4z"/><circle cx="14" cy="13.5" r="3.4"/></svg><span data-touch-label>拍照</span></button>
@@ -261,7 +290,7 @@
               <div id="tmap-container" style="position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;overflow:hidden;" hidden></div>
               <div class="map-compass mono" aria-hidden="true">N<span></span></div>
             </div>
-            <div class="map-legend"><span><i class="legend-player"></i>当前位置</span><span><i class="legend-route"></i>导航路线</span><span><i class="legend-tape"></i>声景磁带</span><span><i class="legend-race"></i>陆路赛</span><span><i class="legend-lake"></i>水上赛</span><span><i class="legend-taxi"></i>出租车</span><span><i class="legend-shop"></i>改装工坊</span><span id="atlas-scale" class="chart-ruler" aria-hidden="true"></span></div>
+            <div class="map-legend"><span><i class="legend-player"></i>当前位置</span><span><i class="legend-route"></i>导航路线</span><span><i class="legend-tape"></i>声景磁带</span><span><i class="legend-event"></i>奇遇</span><span><i class="legend-rest"></i>憩息点</span><span><i class="legend-race"></i>陆路赛</span><span><i class="legend-lake"></i>水上赛</span><span><i class="legend-taxi"></i>出租车</span><span><i class="legend-shop"></i>改装工坊</span><span id="atlas-scale" class="chart-ruler" aria-hidden="true"></span></div>
           </div>
           <aside class="map-sidebar">
             <div class="map-mode-switch" role="group" aria-label="玩法模式切换">
@@ -277,6 +306,7 @@
                 <button type="button" class="map-col-tab" data-col-tab="landmarks" role="tab" aria-selected="true">八景 <span id="tab-landmarks-count" class="mono">0/8</span></button>
                 <button type="button" class="map-col-tab" data-col-tab="tapes" role="tab" aria-selected="false">声景 <span id="tab-tapes-count" class="mono">0/10</span></button>
                 <button type="button" class="map-col-tab" data-col-tab="photos" role="tab" aria-selected="false">明信片 <span id="tab-photos-count" class="mono">0/5</span></button>
+                <button type="button" class="map-col-tab" data-col-tab="rests" role="tab" aria-selected="false">憩息 <span id="tab-rests-count" class="mono">6</span></button>
               </div>
               <div id="map-landmarks" class="map-landmarks"></div>
             </div>
@@ -308,7 +338,7 @@
             <label class="setting-row"><span>触屏操作</span><select id="touch-setting" class="quiet"><option value="auto">自动识别</option><option value="on">开启</option><option value="off" data-en="Off">关闭</option></select></label>
             <div class="setting-row look-setting-row"><label for="look-setting">视角灵敏度</label><select id="look-setting" class="quiet"><option value="low">低</option><option value="normal">标准</option><option value="high">高</option><option value="custom" hidden>自定义</option></select><button id="look-open" class="quiet" type="button">微调</button></div>
             <div class="sheet-footer"><button id="pause-audio" class="quiet sound-toggle" aria-pressed="true">声音开启</button><button id="motion-button" class="quiet" aria-pressed="false">镜头震动开启</button></div>
-            <div class="pause-tools" role="group" aria-label="快捷切换"><button class="quiet" aria-label="切换视角" data-action="KeyC">视角</button><button class="quiet" aria-label="切换昼夜" data-action="KeyN">昼夜</button><button class="quiet" aria-label="切换电台" data-action="KeyR">电台</button><button class="quiet" aria-label="切换声景磁带" data-action="KeyT">声景</button><button class="quiet" aria-label="切换天气" data-action="KeyX">天气</button><button class="quiet" aria-label="一键召车" data-action="KeyV">召车</button><button class="quiet" aria-label="鸣笛" data-action="KeyH">鸣笛</button><button class="quiet" aria-label="切换车灯" data-action="KeyL">车灯</button><button class="quiet" aria-label="拍照模式" data-open="photo">拍照</button></div>
+            <div class="pause-tools" role="group" aria-label="快捷切换"><button class="quiet" aria-label="切换视角" data-action="KeyC">视角</button><button class="quiet" aria-label="休息模式" data-action="KeyZ">憩息</button><button class="quiet" aria-label="切换昼夜" data-action="KeyN">昼夜</button><button class="quiet" aria-label="切换电台" data-action="KeyR">电台</button><button class="quiet" aria-label="切换声景磁带" data-action="KeyT">声景</button><button class="quiet" aria-label="切换天气" data-action="KeyX">天气</button><button class="quiet" aria-label="一键召车" data-action="KeyV">召车</button><button class="quiet" aria-label="鸣笛" data-action="KeyH">鸣笛</button><button class="quiet" aria-label="切换车灯" data-action="KeyL">车灯</button><button class="quiet" aria-label="拍照模式" data-open="photo">拍照</button></div>
           </div>
         </div>
         <div id="look-controls" class="look-controls" hidden>
@@ -434,6 +464,7 @@
             <div><dt><kbd>SHIFT</kbd><kbd>SPACE</kbd></dt><dd>奔跑或氮气加速 / 手刹或船艇制动</dd></div>
             <div><dt><kbd>M</kbd><kbd>C</kbd></dt><dd>查看地图 / 切换机位</dd></div>
             <div><dt><kbd>V</kbd><kbd>P</kbd></dt><dd>一键召唤常用座驾 / 自由镜头拍照模式</dd></div>
+            <div><dt><kbd>Z</kbd></dt><dd>随时进入休息模式（观景长椅就座 / 停车赏景，支持 1×/15×/60× 昼夜流光、B 氛围音与 H 净屏，舆图「憩息」可直达长椅）</dd></div>
             <div><dt><kbd>H</kbd><kbd>L</kbd></dt><dd>鸣笛（行人避让 / 船艇汽笛）/ 手动切换车灯</dd></div>
             <div><dt><kbd>F</kbd><kbd>T</kbd><kbd>R</kbd><kbd>N</kbd><kbd>X</kbd></dt><dd>寻景 / 声景随身听 / 电台 / 昼夜 / 天气</dd></div>
           </dl>

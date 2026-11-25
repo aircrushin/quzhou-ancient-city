@@ -1,5 +1,86 @@
 window.Tideline.english = {
   "exact": {
+    "憩息": "Rest",
+    "小憩": "Rest",
+    "憩息点": "Rest Spots",
+    "八景": "Sights",
+    "古城探索图鉴": "City Exploration Archive",
+    "观景长椅": "Scenic Bench",
+    "信安湖亲水步道": "Xin'an Lake Boardwalk",
+    "县西街": "Xianxi St",
+    "钟楼底": "Bell Tower",
+    "马站底": "Mazhandi",
+    "上下街": "Shangxia St",
+    "县西街 · 钟楼底": "Xianxi St · Bell Tower",
+    "马站底 · 上下街": "Mazhandi · Shangxia St",
+    "湖风细浪": "Lake Breeze",
+    "茶肆沸香": "Teahouse Brew",
+    "古刹松磬": "Temple Pines",
+    "青瓦檐雨": "Eaves Rain",
+    "氛围静音": "Ambient Off",
+    "信安湖微风拂水，木栈波声轻漾。": "Gentle lake wind ripples across the Xin'an boardwalk.",
+    "老街茶肆铜壶微沸，细浪伴盏轻响。": "Copper kettle simmering softly with warm teahouse clinks.",
+    "古柏松涛舒缓呼吸，远寺铜磬余韵轻传。": "Ancient cypress wind breathing with distant bronze temple chimes.",
+    "细雨轻落青瓦檐阶，滴答绵延涤静心尘。": "Fine rain pattering steadily off bluestone tiles and eaves.",
+    "关闭休憩白噪音，静听古城原生街景。": "Rest ambient muted—listening to natural city soundscape.",
+    "休憩氛围音": "Rest Ambient",
+    "切换古城白噪音 / 茶香氛围音 (B)": "Switch ancient-city white noise / teahouse ambient (B)",
+    "小憩传送": "Sit Here",
+    "正在此处": "Seated Here",
+    "小憩直达": "Scenic Fast Travel",
+    "已直达观景长椅并落座小憩": "Arrived and seated at the scenic bench",
+    "点击一键传送并落座小憩（右键导航前往）": "Click to fast-travel & sit immediately (Right-click to route)",
+    "切回自由探索模式后可传送落座小憩": "Switch to Free Roam to fast-travel to benches",
+    "休息模式": "Rest Mode",
+    "休息模式观景栏": "Rest Mode Scenic Bar",
+    "观景小憩": "Scenic Rest",
+    "歇脚小憩": "Take a Breather",
+    "停车赏景": "Parked Vista",
+    "泛舟听水": "Lake Drift",
+    "时光流速": "Time Flow",
+    "1× 静赏": "1× Calm",
+    "15× 观云": "15× Clouds",
+    "60× 逐昼夜": "60× Day-Night",
+    "时段": "Time",
+    "天气": "Weather",
+    "净屏": "Zen View",
+    "起身离开": "Stand Up",
+    "结束赏景": "Exit Rest",
+    "显示憩息栏": "Show Bar",
+    "起身": "Stand",
+    "信安湖亲水木椅": "Xin'an Lake Promenade Bench",
+    "水亭门临江石凳": "Shuitingmen Riverside Stone Bench",
+    "南孔家庙古柏石凳": "Confucius Temple Cypress Stone Bench",
+    "府山公园松影长椅": "Fushan Park Pine-Shade Bench",
+    "衢州钟楼听钟长椅": "Quzhou Bell Tower Chime Bench",
+    "马站底茶肆歇脚椅": "Mazhandi Teahouse Bench",
+    "临湖微风拂过亲水栈桥，远眺严家淤灯塔与水面流霞。": "A lakeside breeze drifts past the boardwalk, opening onto Yanjiayu Lighthouse and shimmering clouds.",
+    "青石古凳映城楼重檐，静听衢江晚风与三街七巷灯火。": "Seated on ancient bluestone before Shuitingmen's sweeping eaves, listen to the river breeze and lantern-lit lanes.",
+    "红墙金瓦映古柏疏影，棂星门前清风徐来心境自澄。": "Vermilion walls and gilded tiles meet swaying cypress shadows outside the Lingxing Gate.",
+    "香樟松影斜落石阶，抬头可见五层钟灵塔静立云端。": "Camphor and pine shade stretches over stone paths beneath the five-tier Zhongling Pagoda.",
+    "古轴街口车马川流，坐看双层铜钟阁静候整点钟声。": "Watch the historic Beimen axis flow by while the bronze bell pavilion awaits the turn of the hour.",
+    "老街食坊炊烟袅袅，暂歇脚步细品古城满巷烟火气。": "Warm steam rises from old street stalls—pause a moment to savor the lively bustle of Mazhandi.",
+    "青砖城楼临水而立，看三街七巷檐灯渐次亮起。": "Gray-brick battlements rise by the water as eaves lanterns awaken across the historic alleys.",
+    "古柏森森红墙静谧，清风送来千年南孔礼韵。": "Tall cypresses frame quiet vermilion walls carrying a millennium of Nankong heritage.",
+    "林荫轻摇鸟语隐约，钟灵塔影斜映翠色山坡。": "Canopies sway softly with birdsong as Zhongling Pagoda crowns the hillside.",
+    "湖波轻漾天光入水，远山剪影随云影缓缓移步。": "Gentle ripples mirror the sky while distant ridges shift beneath drifting clouds.",
+    "老街人声与炭炉香气交织，暂歇片刻尽赏古城烟火。": "Voices and charcoal-baked aromas mingle down the lane—rest awhile in the warmth of the old town.",
+    "画舫轻泊信安湖心，随波听水静观云卷云舒与灯塔流光。": "Drifting gently on Xin'an Lake, listen to the water beneath passing clouds and lighthouse beams.",
+    "暂熄引擎停靠老街一隅，在车窗光影里静观衢州古城四时流转。": "Engine quiet by the curb, watch light and seasons glide past the ancient streets.",
+    "暂歇脚步倚风而坐，在青石古巷与江风流云间独享片刻宁静。": "Pause your stride and sit in the breeze, taking in a quiet moment between stone lanes and drifting clouds.",
+    "赛事进行中": "Trial In Progress",
+    "完成或按 Backspace 终止计时赛后再小憩。": "Finish or press Backspace to abort the time trial before resting.",
+    "奇遇进行中": "Encounter Active",
+    "先完成或按 Backspace 取消当前街头奇遇后再休息。": "Finish or press Backspace to cancel the active encounter before resting.",
+    "请先停稳车辆": "Stop Vehicle First",
+    "减速停稳后按 Z 即可在车内停车赏景。": "Come to a full stop, then press Z to enjoy Parked Vista mode.",
+    "请先停稳船艇": "Stop Boat First",
+    "按 SPACE 停稳船艇后按 Z 即可泛舟听水。": "Hold SPACE to stop the boat, then press Z for Lake Drift mode.",
+    "小憩片刻": "Moment of Rest",
+    "心境澄明": "Serene Mind",
+    "身心舒缓，60 秒内步履轻快、氮气回充加快。": "Refreshed—+8% walking speed and faster nitro regen for 60s.",
+    "随时进入休息模式（观景长椅就座 / 停车赏景，支持 1×/15×/60× 昼夜流光与 H 净屏）": "Toggle Rest Mode anytime (sit on scenic benches / parked vista with 1×/15×/60× time-lapse & H Zen view)",
+    "随时进入休息模式（观景长椅就座 / 停车赏景，支持 1×/15×/60× 昼夜流光、B 氛围音与 H 净屏，舆图「憩息」可直达长椅）": "Toggle Rest Mode anytime (scenic benches / parked vista with 1×/15×/60× time-lapse, B ambient audio, H Zen view, & map bench fast-travel)",
     "自定义": "Custom",
     "拍照": "Photo",
     "召车": "Summon",
@@ -256,6 +337,7 @@ window.Tideline.english = {
     "浅滩银": "Sandbar Silver",
     "黑曜石": "Obsidian",
     "晴朗": "Clear",
+    "晨雾": "Morning Mist",
     "雨后": "After rain",
     "阵雨": "Showers",
     "海风 GT": "Sea Breeze GT",
@@ -724,10 +806,13 @@ window.Tideline.english = {
     "时段切换": "Time of Day",
     "天气切换": "Weather",
     "晴空白昼": "Clear Day",
+    "晨曦微露": "Early Dawn",
     "黄昏暮色": "Golden Dusk",
     "古城夜色": "Nightfall",
     "白昼 / 暮色 / 夜幕循环切换（快捷键 N）": "Cycle Day / Dusk / Night (Key N)",
+    "晨曦 / 白昼 / 暮色 / 夜幕循环切换（快捷键 N）": "Cycle Dawn / Day / Dusk / Night (Key N)",
     "晴朗 / 雨后 / 阵雨循环切换（快捷键 X）": "Cycle Clear / After Rain / Showers (Key X)",
+    "晴朗 / 晨雾 / 雨后 / 阵雨循环切换（快捷键 X）": "Cycle Clear / Morning Mist / After Rain / Showers (Key X)",
     "古城八景全打卡": "All 8 Landmarks Discovered",
     "全部地标已探索": "All Landmarks Explored",
     "衢州古城全境达成": "Quzhou Fully Explored",
@@ -864,6 +949,108 @@ window.Tideline.english = {
     "已切回自由探索模式，可驾车巡游古城八景或随时按 G 调校升级爱车。": "Switched to Free Explore. Discover all 8 landmarks or press G anytime to tune your car.",
     "黄色出租车就在身旁。上车后沿导航接客，平稳驾驶赚高额小费，随时按 G 进改装工坊升级！": "Your yellow taxi is right beside you. Follow routes to pick up fares, drive smoothly for tips, and press G anytime for Custom Works!",
     "欢迎自由探索衢州古城！按 M 打开手绘舆图导航八景打卡赢奖金，随时按 G 进入改装工坊升级座驾。": "Welcome to Quzhou Ancient City! Press M for the hand-drawn atlas to explore 8 landmarks, or G for Custom Works."
+    ,
+    "信安湖 · 祈福放灯": "Xin'an Lake · Sky Lantern Pier",
+    "放飞祈福孔明灯": "Release Sky Lantern",
+    "放灯": "Lantern",
+    "灯影伴行": "Lantern Glow",
+    "祈福放灯": "Sky Lantern",
+    "信安湖灯舫": "Xin'an Lantern Boat",
+    "90 秒内步行 +12%、氮气回充 ×1.4、漂移积分 ×1.25": "90s: +12% walk speed, ×1.4 nitro recharge, ×1.25 drift",
+    "一盏祈福孔明灯乘着晚风升入星河，愿南孔古城岁岁长安。": "A glowing sky lantern rides the lake breeze into the stars—peace to ancient Quzhou.",
+    "暖灯扶摇映照信安湖波，愿来往行人与古城烟火皆顺遂。": "Warm lantern light shimmers over Xin'an Lake—fair winds to every traveler.",
+    "纸灯载愿越过水亭门飞檐，南孔圣地清风伴你漫游。": "Paper lantern drifts above Shuitingmen's eaves—may gentle winds guide your roam.",
+    "灯火点亮信安夜空，愿下一段衢州街巷旅途惊喜常伴。": "Lanterns brighten Xin'an's night sky—may every alley ahead hold delight.",
+    "湖风托起祈愿明灯，与远岸灯塔遥相守望。": "The lake breeze lifts your wish lantern to greet the distant island beacon.",
+    "炭炉烤饼师傅": "Charcoal Oven Baker",
+    "南孔家庙游人": "Temple Visitor",
+    "钟楼底老街坊": "Bell Tower Local",
+    "避雨路人": "Passerby in Rain",
+    "夜游行人": "Night Stroller",
+    "古城行人": "Old Town Stroller",
+    "刚出炉的梅干菜烤饼咯，外酥里香！": "Fresh Quzhou flatbread out of the oven—crispy and savory!",
+    "衢州三头一掌现卤现拌，微辣中辣任选！": "Freshly braised Quzhou spicy duck heads—mild or medium!",
+    "冰镇薄荷水晶糕，解辣又清爽！": "Chilled mint crystal jelly—cool and refreshing!",
+    "晚市最热闹，烤饼配鸭头趁热吃！": "Night market's lively—grab hot flatbread with spicy duck!",
+    "夜市灯亮啦，来碗热粉干再逛信安湖！": "Market lanterns are on—try hot rice noodles before strolling the lake!",
+    "下雨啦，快进棚里喝碗热粉干暖暖身！": "Rain's coming down—step under the awning for hot noodles!",
+    "雨天配点热辣鸭头最驱寒！": "Nothing warms up a rainy evening like Quzhou spicy duck!",
+    "有礼衢州，进棂星门先放轻脚步吧。": "City of courtesy—tread gently past Lingxingmen Gate.",
+    "大成殿前的檀香闻着真静心。": "The sandalwood incense before Dacheng Hall feels so peaceful.",
+    "府山桂花开了，一路都是甜丝丝的香。": "Fushan's osmanthus is in bloom—sweet fragrance along the path.",
+    "沿着松影小径上去就能望见钟灵塔。": "Follow the pine trail up for a clear view of Zhongling Pagoda.",
+    "晨雾里严家淤灯塔若隐若现，真好看。": "Yanjiayu Lighthouse peeking through the morning mist looks lovely.",
+    "清早湖面起轻岚，像展开了一幅水墨画。": "Morning vapor over the lake looks like an unrolled ink painting.",
+    "快看！湖面河灯漂起来了，天上还有孔明灯。": "Look! River lanterns on the water and sky lanterns rising above.",
+    "去湖边放一盏祈福孔明灯吧，晚风正好。": "Let's release a sky lantern by the pier—the evening breeze is perfect.",
+    "从东岸码头坐游艇，一会儿就到严家淤岛。": "Take a boat from East Pier—Yanjiayu Island is just across the water.",
+    "信安湖风真凉爽，远处的白鹭也在滑翔。": "Such a cool breeze on Xin'an Lake—even the egrets are gliding.",
+    "晚风正好，水亭门城楼的灯笼全亮啦。": "Lovely night breeze—all the lanterns on Shuitingmen Gate are glowing.",
+    "提着灯笼走三街七巷，特别有古城味道。": "Carrying a lantern down the historic lanes feels timeless.",
+    "清早衢江起薄雾，城墙看着像水墨画一样。": "Morning river mist makes the ancient wall look like ink wash art.",
+    "水亭门青石板带点露水，清晨最安静。": "Morning dew on Shuitingmen's flagstones—so peaceful early on.",
+    "三街七巷里藏着不少老字号，慢走细逛。": "Classic old shops hide all along the Three Streets & Seven Alleys.",
+    "天王塔院那边拍照特别出片。": "Tianwang Pagoda Courtyard makes a great photo spot.",
+    "青石板沾了雨，撑着油纸伞走最像江南。": "Rain-slick flagstones and oil-paper umbrellas—pure Jiangnan charm.",
+    "突然下阵雨了，快走几步别淋湿！": "Sudden shower—better hurry before getting soaked!",
+    "雨后路面反光，把古城檐灯都映出来了。": "Wet roads mirror all the glowing eaves and lanterns.",
+    "夏夜林子里有萤火虫，信安湖还能放孔明灯。": "Fireflies glow in the grove, and sky lanterns rise over Xin'an Lake.",
+    "晚上的衢州古城慢悠悠的，逛着真惬意。": "Ancient Quzhou moves at such a relaxing pace at night.",
+    "今天天气真好，适合环古城兜一圈。": "Great weather today for a scenic cruise around the old town.",
+    "听说府东街工坊能把爱车改得特别帅。": "Heard Fudong Street Custom Works does awesome car upgrades.",
+    "奇遇": "Encounter",
+    "街头奇遇": "Street Encounter",
+    "街头奇遇 · 急件配送": "Street Favor · Rush Delivery",
+    "街头奇遇 · 顺风车": "Street Favor · Quick Lift",
+    "街头奇遇 · 旅拍委托": "Street Favor · Photo Commission",
+    "奇遇委托达成": "Street Favor Complete",
+    "街头奇遇结束": "Street Favor Ended",
+    "已放弃当前委托": "Favor Cancelled",
+    "在古城漫游时仍会陆续遇到新的街头奇遇。": "New street favors will appear as you roam the old town.",
+    "马站底热卤急件": "Mazhandi Spicy Duck Rush",
+    "炭炉烤饼加急单": "Charcoal Flatbread Rush",
+    "雨夜顺风车": "Rainy Night Lift",
+    "信安湖顺风车": "Xin'an Lake Lift",
+    "旅拍摄影委托 · 水亭门": "Photo Commission · Shuitingmen",
+    "旅拍摄影委托 · 南孔家庙": "Photo Commission · Confucius Temple",
+    "马站底老摊主": "Mazhandi Stall Owner",
+    "府东街烤饼师傅": "Fudong Oven Baker",
+    "礼贤街赶路市民": "Lixian Commuter",
+    "南孔老茶客": "Old Town Tea Regular",
+    "水亭街旅拍摄影师": "Shuiting Street Photographer",
+    "钟楼底写生画师": "Bell Tower Sketch Artist",
+    "水亭门茶肆": "Shuitingmen Teahouse",
+    "南孔家庙牌坊口": "Confucius Temple Archway",
+    "衢州钟楼 · 北门街": "Bell Tower · Beimen St",
+    "信安湖东岸栈道口": "Xin'an Lake Boardwalk",
+    "水亭门城楼取景位": "Shuitingmen Photo Spot",
+    "孔氏南宗家庙取景位": "Confucius Temple Photo Spot",
+    "小伙子帮个忙！这锅刚卤好的三头一掌急着送去水亭门茶肆，趁热给赏钱！": "Hey, need a hand! This hot pot of spicy duck heads must reach Shuitingmen Teahouse—good tip if still hot!",
+    "太感谢啦！72 秒内送到水亭门城楼前，保热送到另加 ¥50 急件赏！": "Thanks a ton! Deliver to Shuitingmen within 72s—extra ¥50 rush bonus if piping hot!",
+    "鸭头还冒着热气呢，真是雪中送炭，这笔跑腿费请收好！": "Still steaming hot! You saved the day—here's your delivery pay!",
+    "刚出炉的梅干菜烤饼！有位客人等在孔氏南宗家庙口，能不能顺路帮送一下？": "Fresh flatbread out of the oven! A customer's waiting at Confucius Temple—can you rush it over?",
+    "油纸包好啦！60 秒内送去南孔家庙牌坊口，酥脆送达加 ¥45 奖金！": "Wrapped fresh! Get it to the Temple Archway in 60s for a ¥45 crispy bonus!",
+    "烤饼外皮还脆着呢！谢啦，这份加急单酬劳给你！": "Crust is still crisp! Thanks—here's your courier pay!",
+    "师傅顺路吗？急着回衢州钟楼北门街，能不能搭个顺风车？": "Heading toward Bell Tower on Beimen Street? Could I catch a quick lift?",
+    "多谢搭把手！送到衢州钟楼北门街就行，开稳点有额外小费。": "Appreciate the ride! Drop me at Bell Tower—smooth driving gets a tip.",
+    "一路又快又稳，可算赶上回家啦，这点心意请一定收下！": "Fast and smooth! Made it home in time—please take this!",
+    "朋友顺路去信安湖东岸吗？想赶着晚风去湖边看灯，搭一程行不？": "Headed to Xin'an Lake east shore? Mind giving me a quick ride to catch the breeze?",
+    "真热心！带我到信安湖东岸栈道口就行，路上别颠簸，到了给茶水费。": "So kind! Just take me to the lakeside boardwalk—drive smoothly for a bonus.",
+    "正好赶上湖风最舒服的时候！多谢相送，酬劳请收好！": "Just in time for the cool lake breeze! Thanks for the lift!",
+    "嗨！我腿脚有点累，能帮我去水亭门城楼拍一张明信片构图吗？稿费 ¥220！": "Hey! My legs are beat—could you shoot a postcard shot of Shuitingmen Gate for ¥220?",
+    "拜托你啦！到水亭门城楼前按 P 进拍照模式，框住城楼按空格就能交稿！": "Much obliged! Head to Shuitingmen, press P for Photo Mode, frame the gate and hit Space!",
+    "飞檐和城墙构图太绝了！这就是我要的古城味道，稿费 ¥220 已结清！": "Gorgeous eaves and framing! Exactly the old-town vibe I needed—here's ¥220!",
+    "请问方便帮个忙吗？我想画南孔家庙红墙，能帮我拍张实景参考照吗？": "Excuse me—I'm sketching the Confucius Temple walls. Could you snap a reference photo?",
+    "太好了！到孔氏南宗家庙按 P 打开拍照模式，框住红墙古柏按空格交稿！": "Wonderful! Head to Confucius Temple, press P, frame the crimson walls and hit Space!",
+    "红墙古柏的光影抓得太准了，画稿有参考啦！这 ¥220 酬劳请收好！": "Perfect light on the crimson walls and cypresses! Here's your ¥220 fee!",
+    "超出了热送时限，下次再帮老街坊搭把手吧。": "Ran out of time while it cooled—catch the next neighborhood favor!",
+    "超出约定时间，乘客在路边先下车赶路了。": "Time ran out—the rider hopped out by the curb to hurry on foot.",
+    "乘客久等没见到车，先沿着街边步行离开了。": "The rider waited too long for a car and set off on foot.",
+    "水亭门城楼 · 临江古韵": "Shuitingmen Gate · Riverside Grace",
+    "南孔家庙 · 朱墙古柏": "Confucius Temple · Crimson Walls",
+    "衢州钟楼 · 古轴晨钟": "Quzhou Bell Tower · Morning Bell",
+    "府山钟灵塔 · 松影流云": "Zhongling Pagoda · Pine & Clouds",
+    "严家淤灯塔 · 信安湖光": "Yanjiayu Lighthouse · Lake Glow"
   },
   "templates": [
     [
@@ -1237,6 +1424,122 @@ window.Tideline.english = {
     [
       "R {1}",
       "R  {1}"
+    ],
+    [
+      "接下奇遇 · {1}",
+      "Accept Favor · {1}"
+    ],
+    [
+      "带乘客出发 · {1}",
+      "Pick Up Rider · {1}"
+    ],
+    [
+      "奇遇 {1}",
+      "Favors {1}"
+    ],
+    [
+      "奖励 {1}",
+      "Reward {1}"
+    ],
+    [
+      "稿费 {1}",
+      "Fee {1}"
+    ],
+    [
+      "请上车或按 V 召车带乘客前往{1}。",
+      "Board a car or press V to summon one and drive to {1}."
+    ],
+    [
+      "请上车或按 V 召车带乘客前往{1}（按 Backspace 取消）。",
+      "Board a car or press V to drive rider to {1} (Backspace to cancel)."
+    ],
+    [
+      "乘客已上车！平稳驶往{1}（奖励 {2}）。",
+      "Rider aboard! Drive smoothly to {1} (Reward {2})."
+    ],
+    [
+      "请在 {1} 秒内送达{2}（奖励 {3}）。",
+      "Deliver to {2} within {1}s (Reward {3})."
+    ],
+    [
+      "前往{1}，按 P 进拍照模式框住地标按空格交稿。",
+      "Head to {1}, press P for Photo Mode, frame landmark & hit Space."
+    ],
+    [
+      "前往{1}，按 P 进拍照模式框住地标按空格交稿（按 Backspace 取消）。",
+      "Head to {1}, press P, frame landmark & hit Space (Backspace to cancel)."
+    ],
+    [
+      "平稳驶往{1}，抵达后减速靠边下车（按 Backspace 取消）。",
+      "Drive smoothly to {1} and slow down at curb (Backspace to cancel)."
+    ],
+    [
+      "请回到车上继续送乘客前往{1}（按 Backspace 取消）。",
+      "Return to your car to drive rider to {1} (Backspace to cancel)."
+    ],
+    [
+      "趁热送达{1}，提前送达另获加奖（按 Backspace 取消）。",
+      "Deliver hot to {1}—finish early for a bonus (Backspace to cancel)."
+    ],
+    [
+      "酬劳 {1}（{2}） · 累计奇遇 {3} 次",
+      "Paid {1} ({2}) · {3} favors completed"
+    ],
+    [
+      "酬劳 {1} · 累计奇遇 {2} 次",
+      "Paid {1} · {2} favors completed"
+    ],
+    [
+      "热送加奖 +{1}",
+      "Hot rush bonus +{1}"
+    ],
+    [
+      "平稳护送小费 +{1}",
+      "Smooth ride tip +{1}"
+    ],
+    [
+      "✦ 委托取景锁定：{1} · 空格交付 +{2}",
+      "✦ Commission Framed: {1} · Space to submit +{2}"
+    ],
+    [
+      "✓ 旅拍委托完成：{1} (+{2})",
+      "✓ Photo Commission Done: {1} (+{2})"
+    ],
+    [
+      "✓ 明信片打卡成功：{1} (+{2})",
+      "✓ Postcard Collected: {1} (+{2})"
+    ],
+    [
+      "坐下小憩 · {1}",
+      "Sit & Rest · {1}"
+    ],
+    [
+      "停车赏景 · {1}",
+      "Parked Vista · {1}"
+    ],
+    [
+      "泛舟听水 · {1}",
+      "Lake Drift · {1}"
+    ],
+    [
+      "{1} · 歇脚小憩",
+      "{1} · Take a Breather"
+    ],
+    [
+      "{1} · {2} · {3}×",
+      "{1} · {2} · {3}×"
+    ],
+    [
+      "{1} · {2}",
+      "{1} · {2}"
+    ],
+    [
+      "已直达落座 · 氛围音：{1}",
+      "Seated · Ambient: {1}"
+    ],
+    [
+      "已抵达{1}，按 E 或 Z 坐下小憩。",
+      "Arrived at {1}—press E or Z to sit and rest."
     ]
   ]
 };

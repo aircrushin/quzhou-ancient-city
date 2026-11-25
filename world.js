@@ -102,6 +102,169 @@
       line: '悠扬钟声越过北门街与钟楼底，街巷行人驻足侧耳倾听。',
       toastBody: '古铜钟连鸣三声，周遭街巷行人纷纷驻足聆听',
     },
+    {
+      id: 'xinan_lantern', kind: 'lantern', x: 330.6, z: 148.5,
+      name: '信安湖 · 祈福放灯', actionLabel: '放飞祈福孔明灯', shortLabel: '放灯', cost: 0, firstBonus: 80,
+      buff: { id: 'lantern_wish', name: '灯影伴行', icon: '✦', duration: 90, walkMult: 1.12, nitroRegenMult: 1.40, driftMult: 1.25 },
+      speaker: '信安湖灯舫',
+      line: '一盏祈福孔明灯乘着晚风升入星河，愿南孔古城岁岁长安。',
+      toastBody: '90 秒内步行 +12%、氮气回充 ×1.4、漂移积分 ×1.25',
+    },
+  ];
+  const REST_AMBIENTS = [
+    { id: 'lake', name: '湖风细浪', desc: '信安湖微风拂水，木栈波声轻漾。' },
+    { id: 'tea', name: '茶肆沸香', desc: '老街茶肆铜壶微沸，细浪伴盏轻响。' },
+    { id: 'temple', name: '古刹松磬', desc: '古柏松涛舒缓呼吸，远寺铜磬余韵轻传。' },
+    { id: 'rain', name: '青瓦檐雨', desc: '细雨轻落青瓦檐阶，滴答绵延涤静心尘。' },
+    { id: 'off', name: '氛围静音', desc: '关闭休憩白噪音，静听古城原生街景。' },
+  ];
+  const REST_SPOTS = [
+    {
+      id: 'rest_xinan_lake',
+      name: '信安湖亲水木椅',
+      district: '信安湖亲水步道',
+      ambient: 'lake',
+      x: 325.8, z: 132.4,
+      seatX: 325.88, seatZ: 132.4,
+      exitX: 327.08, exitZ: 132.4,
+      yaw: Math.PI / 2,
+      seatY: 0.50,
+      camPitch: 0.04,
+      camOrbit: 0.18,
+      style: 'wood',
+      existingBench: true,
+      poem: '临湖微风拂过亲水栈桥，远眺严家淤灯塔与水面流霞。',
+    },
+    {
+      id: 'rest_shuitingmen',
+      name: '水亭门临江石凳',
+      district: '水亭门古街',
+      ambient: 'lake',
+      x: -160.0, z: -92.0,
+      seatX: -160.07, seatZ: -91.96,
+      exitX: -161.05, exitZ: -91.32,
+      yaw: -0.993,
+      seatY: 0.48,
+      camPitch: 0.14,
+      camOrbit: -0.18,
+      style: 'stone',
+      existingBench: false,
+      poem: '青石古凳映城楼重檐，静听衢江晚风与三街七巷灯火。',
+    },
+    {
+      id: 'rest_kongmiao',
+      name: '南孔家庙古柏石凳',
+      district: '孔氏南宗家庙',
+      ambient: 'temple',
+      x: 150.0, z: -6.0,
+      seatX: 150.05, seatZ: -6.07,
+      exitX: 150.72, exitZ: -7.02,
+      yaw: 2.531,
+      seatY: 0.48,
+      camPitch: 0.10,
+      camOrbit: -0.22,
+      style: 'stone',
+      existingBench: false,
+      poem: '红墙金瓦映古柏疏影，棂星门前清风徐来心境自澄。',
+    },
+    {
+      id: 'rest_fushan',
+      name: '府山公园松影长椅',
+      district: '府山公园',
+      ambient: 'temple',
+      x: 169.0, z: 91.0,
+      seatX: 169.06, seatZ: 90.94,
+      exitX: 169.88, exitZ: 90.12,
+      yaw: 2.356,
+      seatY: 0.49,
+      camPitch: 0.18,
+      camOrbit: -0.20,
+      style: 'wood',
+      existingBench: false,
+      poem: '香樟松影斜落石阶，抬头可见五层钟灵塔静立云端。',
+    },
+    {
+      id: 'rest_belltower',
+      name: '衢州钟楼听钟长椅',
+      district: '县西街 · 钟楼底',
+      ambient: 'tea',
+      x: 46.0, z: -90.0,
+      seatX: 45.95, seatZ: -90.06,
+      exitX: 45.15, exitZ: -90.92,
+      yaw: -2.393,
+      seatY: 0.49,
+      camPitch: 0.15,
+      camOrbit: -0.22,
+      style: 'wood',
+      existingBench: false,
+      poem: '古轴街口车马川流，坐看双层铜钟阁静候整点钟声。',
+    },
+    {
+      id: 'rest_mazhandi',
+      name: '马站底茶肆歇脚椅',
+      district: '马站底 · 上下街',
+      ambient: 'tea',
+      x: 90.0, z: 130.0,
+      seatX: 89.93, seatZ: 129.97,
+      exitX: 88.84, exitZ: 129.54,
+      yaw: -1.947,
+      seatY: 0.49,
+      camPitch: 0.08,
+      camOrbit: -0.24,
+      style: 'wood',
+      existingBench: false,
+      poem: '老街食坊炊烟袅袅，暂歇脚步细品古城满巷烟火气。',
+    },
+  ];
+  const STREET_EVENTS = [
+    {
+      id: 'ev_duck_express', kind: 'courier', name: '马站底热卤急件',
+      speaker: '马站底老摊主', x: 96.5, z: 124.0, destX: -152.4, destZ: -75.4, destName: '水亭门茶肆',
+      timeLimit: 72, reward: 180, bonus: 50,
+      hailLine: '小伙子帮个忙！这锅刚卤好的三头一掌急着送去水亭门茶肆，趁热给赏钱！',
+      acceptLine: '太感谢啦！72 秒内送到水亭门城楼前，保热送到另加 ¥50 急件赏！',
+      completeLine: '鸭头还冒着热气呢，真是雪中送炭，这笔跑腿费请收好！',
+    },
+    {
+      id: 'ev_oven_delivery', kind: 'courier', name: '炭炉烤饼加急单',
+      speaker: '府东街烤饼师傅', x: 256.0, z: 128.0, destX: 157.6, destZ: 1.7, destName: '南孔家庙牌坊口',
+      timeLimit: 60, reward: 160, bonus: 45,
+      hailLine: '刚出炉的梅干菜烤饼！有位客人等在孔氏南宗家庙口，能不能顺路帮送一下？',
+      acceptLine: '油纸包好啦！60 秒内送去南孔家庙牌坊口，酥脆送达加 ¥45 奖金！',
+      completeLine: '烤饼外皮还脆着呢！谢啦，这份加急单酬劳给你！',
+    },
+    {
+      id: 'ev_rain_lift', kind: 'ride', name: '雨夜顺风车', preferRain: true, preferNight: true,
+      speaker: '礼贤街赶路市民', x: -94.3, z: 164.0, destX: 52.2, destZ: -81.4, destName: '衢州钟楼 · 北门街',
+      timeLimit: 85, reward: 200, bonus: 50,
+      hailLine: '师傅顺路吗？急着回衢州钟楼北门街，能不能搭个顺风车？',
+      acceptLine: '多谢搭把手！送到衢州钟楼北门街就行，开稳点有额外小费。',
+      completeLine: '一路又快又稳，可算赶上回家啦，这点心意请一定收下！',
+    },
+    {
+      id: 'ev_lake_lift', kind: 'ride', name: '信安湖顺风车', preferNight: true,
+      speaker: '南孔老茶客', x: 157.6, z: 1.7, destX: 274.0, destZ: 170.0, destName: '信安湖东岸栈道口',
+      timeLimit: 75, reward: 190, bonus: 45,
+      hailLine: '朋友顺路去信安湖东岸吗？想赶着晚风去湖边看灯，搭一程行不？',
+      acceptLine: '真热心！带我到信安湖东岸栈道口就行，路上别颠簸，到了给茶水费。',
+      completeLine: '正好赶上湖风最舒服的时候！多谢相送，酬劳请收好！',
+    },
+    {
+      id: 'ev_photo_shuiting', kind: 'photo', name: '旅拍摄影委托 · 水亭门', photoSpotId: 'photo_shuiting',
+      speaker: '水亭街旅拍摄影师', x: -75.2, z: -95.9, destX: -152.4, destZ: -75.4, destName: '水亭门城楼取景位',
+      timeLimit: 0, reward: 220, bonus: 0,
+      hailLine: '嗨！我腿脚有点累，能帮我去水亭门城楼拍一张明信片构图吗？稿费 ¥220！',
+      acceptLine: '拜托你啦！到水亭门城楼前按 P 进拍照模式，框住城楼按空格就能交稿！',
+      completeLine: '飞檐和城墙构图太绝了！这就是我要的古城味道，稿费 ¥220 已结清！',
+    },
+    {
+      id: 'ev_photo_kongmiao', kind: 'photo', name: '旅拍摄影委托 · 南孔家庙', photoSpotId: 'photo_kongmiao',
+      speaker: '钟楼底写生画师', x: 52.2, z: -81.4, destX: 157.6, destZ: 1.7, destName: '孔氏南宗家庙取景位',
+      timeLimit: 0, reward: 220, bonus: 0,
+      hailLine: '请问方便帮个忙吗？我想画南孔家庙红墙，能帮我拍张实景参考照吗？',
+      acceptLine: '太好了！到孔氏南宗家庙按 P 打开拍照模式，框住红墙古柏按空格交稿！',
+      completeLine: '红墙古柏的光影抓得太准了，画稿有参考啦！这 ¥220 酬劳请收好！',
+    },
   ];
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -1790,6 +1953,35 @@
     yield;
     window.Tideline.addStoryLandmarks?.(boulevardAssets);
     window.Tideline.addNightMarket?.(boulevardAssets);
+    const restStoneMat = mat('#8c9290', { roughness: .88, metalness: .04 });
+    const restStoneTrim = mat('#aba698', { roughness: .82, metalness: .05 });
+    const restWoodMat = mat('#7e593d', { roughness: .72, metalness: .04 });
+    const restIronMat = mat('#2a3236', { roughness: .48, metalness: .62 });
+    for (const spot of REST_SPOTS) {
+      if (spot.existingBench) continue;
+      const baseY = surfaceHeight(spot.x, spot.z) - .023;
+      const fx = Math.sin(spot.yaw), fz = Math.cos(spot.yaw);
+      const rx = Math.cos(spot.yaw), rz = -Math.sin(spot.yaw);
+      box(restStoneTrim, spot.x, baseY + .03, spot.z, 2.72, .05, 1.38, spot.yaw);
+      if (spot.style === 'stone') {
+        box(restStoneMat, spot.x, baseY + .43, spot.z, 2.28, .12, .58, spot.yaw);
+        box(restStoneTrim, spot.x, baseY + .495, spot.z, 2.34, .025, .62, spot.yaw);
+        for (const side of [-1, 1]) {
+          box(restStoneMat, spot.x + side * rx * .84, baseY + .22, spot.z + side * rz * .84, .24, .38, .50, spot.yaw);
+        }
+      } else {
+        box(restWoodMat, spot.x, baseY + .455, spot.z, 2.34, .085, .56, spot.yaw);
+        box(restWoodMat, spot.x - fx * .255, baseY + .79, spot.z - fz * .255, 2.34, .32, .075, spot.yaw);
+        for (const side of [-1, 1]) {
+          const lx = spot.x + side * rx * .92;
+          const lz = spot.z + side * rz * .92;
+          box(restIronMat, lx, baseY + .24, lz, .10, .44, .58, spot.yaw);
+          box(restIronMat, lx - fx * .25, baseY + .68, lz - fz * .25, .08, .54, .08, spot.yaw);
+          box(restWoodMat, lx, baseY + .61, lz, .09, .05, .54, spot.yaw);
+        }
+      }
+      solid(spot.x, spot.z, Math.abs(rx) * 2.32 + Math.abs(fx) * .60, Math.abs(rz) * 2.32 + Math.abs(fz) * .60, .86, false);
+    }
     yield* bakeStreetShade();
     if (Y) {
       for (const { x, z, title, sub, yaw } of Y.ROAD_SIGNS) {
@@ -2085,7 +2277,7 @@
         '  float moonDisk = smoothstep(.99935,.99968,towardMoon);',
         '  float moonHalo = pow(towardMoon,26.0)*.16 + pow(towardMoon,150.0)*.42;',
         '  float moonVis = stars * (1.0 - clouds * .86) * smoothstep(.02,.16,h);',
-        '  col += vec3(.86,.92,1.0) * (moonDisk * 1.48 + moonHalo) * moonVis;',
+        '  col += vec3(.92,.95,1.0) * (moonDisk * 1.75 + moonHalo * 1.12) * moonVis;',
         '  vec2 starUV = vec2(azimuth*186.0, d.y*311.0);',
         '  vec2 starCell = floor(starUV);',
         '  float starHash = hash(starCell);',
@@ -2314,6 +2506,88 @@
     riverLanternGroup.visible = false;
     scene.add(riverLanternGroup);
 
+    const skyLanternSpecs = [];
+    const skyLanternZones = [
+      { cx: 392, cz: 148, rx: 68, rz: 108, count: 16 },
+      { cx: -175, cz: -72, rx: 46, rz: 44, count: 6 },
+      { cx: 180, cz: 76, rx: 52, rz: 48, count: 6 },
+    ];
+    for (const zc of skyLanternZones) {
+      for (let i = 0; i < zc.count; i++) {
+        skyLanternSpecs.push({
+          baseX: zc.cx + (atmoRng() - .5) * zc.rx * 2,
+          baseZ: zc.cz + (atmoRng() - .5) * zc.rz * 2,
+          baseY: 4.5 + atmoRng() * 8.0,
+          maxRise: 56 + atmoRng() * 34,
+          driftX: 8 + atmoRng() * 14,
+          driftZ: (atmoRng() - .45) * 18,
+          speed: .015 + atmoRng() * .014,
+          phase: atmoRng(),
+          sway: 1.4 + atmoRng() * 2.2,
+          color: new T.Color(i % 3 === 0 ? '#ffd584' : i % 3 === 1 ? '#ffa95c' : '#ffbe6e'),
+        });
+      }
+    }
+    const skyLanternGroup = new T.Group();
+    const slBodyGeo = new T.CylinderGeometry(.32, .20, .56, 6);
+    const slBodyMat = new T.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, toneMapped: false });
+    const skyLanternMesh = new T.InstancedMesh(slBodyGeo, slBodyMat, skyLanternSpecs.length);
+    skyLanternMesh.frustumCulled = false;
+    skyLanternMesh.renderOrder = 413;
+    const slGlowPos = new Float32Array(skyLanternSpecs.length * 3);
+    const slGlowCol = new Float32Array(skyLanternSpecs.length * 3);
+    const slGlowPhase = new Float32Array(skyLanternSpecs.length);
+    const slDummy = new T.Object3D();
+    for (let i = 0; i < skyLanternSpecs.length; i++) {
+      const s = skyLanternSpecs[i];
+      slDummy.position.set(s.baseX, s.baseY, s.baseZ);
+      slDummy.updateMatrix();
+      skyLanternMesh.setMatrixAt(i, slDummy.matrix);
+      skyLanternMesh.setColorAt(i, s.color);
+      slGlowPos[i * 3] = s.baseX; slGlowPos[i * 3 + 1] = s.baseY; slGlowPos[i * 3 + 2] = s.baseZ;
+      slGlowCol[i * 3] = s.color.r; slGlowCol[i * 3 + 1] = s.color.g; slGlowCol[i * 3 + 2] = s.color.b;
+      slGlowPhase[i] = s.phase * Math.PI * 2;
+    }
+    skyLanternMesh.instanceMatrix.needsUpdate = true;
+    if (skyLanternMesh.instanceColor) skyLanternMesh.instanceColor.needsUpdate = true;
+    const slGlowGeo = new T.BufferGeometry();
+    slGlowGeo.setAttribute('position', new T.BufferAttribute(slGlowPos, 3).setUsage(T.DynamicDrawUsage));
+    slGlowGeo.setAttribute('aColor', new T.BufferAttribute(slGlowCol, 3));
+    slGlowGeo.setAttribute('aPhase', new T.BufferAttribute(slGlowPhase, 1));
+    const skyLanternUniforms = { uTime: weatherTime, uAlpha: { value: 0 }, uPixelRatio: { value: dprVal() } };
+    const skyLanternGlow = new T.Points(slGlowGeo, new T.ShaderMaterial({
+      uniforms: skyLanternUniforms, transparent: true, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false,
+      vertexShader: [
+        'attribute vec3 aColor; attribute float aPhase;',
+        'uniform float uTime, uAlpha, uPixelRatio;',
+        'varying vec3 vColor; varying float vAlpha;',
+        'void main(){',
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
+        '  float dist = max(2.0, -mv.z);',
+        '  float heightFade = smoothstep(4.5, 11.0, position.y) * (1.0 - smoothstep(66.0, 96.0, position.y));',
+        '  vColor = aColor;',
+        '  vAlpha = uAlpha * heightFade * (.84 + .16 * sin(uTime * 3.1 + aPhase)) * (1.0 - smoothstep(220.0, 440.0, dist));',
+        '  gl_PointSize = clamp(3.4 * uPixelRatio * (340.0 / dist), 2.0, 48.0);',
+        '  gl_Position = projectionMatrix * mv;',
+        '}',
+      ].join('\n'),
+      fragmentShader: [
+        'varying vec3 vColor; varying float vAlpha;',
+        'void main(){',
+        '  float d = length(gl_PointCoord - .5) * 2.0;',
+        '  if (d > 1.0 || vAlpha < .004) discard;',
+        '  float g = exp(-d * d * 4.4) * .88 + pow(max(0.0, 1.0 - d), 2.3) * .42;',
+        '  gl_FragColor = vec4(vColor * g, g * vAlpha);',
+        '  #include <colorspace_fragment>',
+        '}',
+      ].join('\n'),
+    }));
+    skyLanternGlow.frustumCulled = false;
+    skyLanternGlow.renderOrder = 417;
+    skyLanternGroup.add(skyLanternMesh, skyLanternGlow);
+    skyLanternGroup.visible = false;
+    scene.add(skyLanternGroup);
+
     const plumeSources = [
       { x: 329.0, y: 1.80, z: 105.7, count: 22, h: 3.8, size: 1.05, speed: .26, color: '#f4e6d2' },
       { x: 329.0, y: 1.80, z: 106.5, count: 22, h: 3.9, size: 1.12, speed: .24, color: '#f7e3c9' },
@@ -2321,9 +2595,9 @@
       { x: 329.0, y: 1.72, z: 122.4, count: 18, h: 3.4, size: .98, speed: .27, color: '#f3e5d2' },
       { x: 70.8, y: 2.15, z: 126.4, count: 22, h: 4.1, size: 1.16, speed: .23, color: '#f5e2c6' },
       { x: 75.8, y: 2.15, z: 135.4, count: 22, h: 4.0, size: 1.14, speed: .24, color: '#f4e4cd' },
-      { x: 161.4, y: 1.45, z: -15.4, count: 26, h: 5.4, size: .92, speed: .16, color: '#dcece7' },
-      { x: 158.8, y: 1.32, z: -8.6, count: 18, h: 4.4, size: .76, speed: .17, color: '#d7eae6' },
-      { x: 164.0, y: 1.32, z: -8.6, count: 18, h: 4.4, size: .76, speed: .17, color: '#d7eae6' },
+      { x: 161.4, y: 1.45, z: -15.4, count: 32, h: 5.4, size: .98, speed: .15, color: '#dcece7' },
+      { x: 158.8, y: 1.32, z: -8.6, count: 24, h: 4.4, size: .84, speed: .16, color: '#d7eae6' },
+      { x: 164.0, y: 1.32, z: -8.6, count: 24, h: 4.4, size: .84, speed: .16, color: '#d7eae6' },
       { x: -152.0, y: 2.35, z: -70.0, count: 18, h: 4.2, size: 1.05, speed: .20, color: '#eae2d4' },
     ];
     const totalPlumes = plumeSources.reduce((acc, s) => acc + s.count, 0);
@@ -2371,8 +2645,8 @@
         '  float lifeAlpha = smoothstep(0.0, .18, age) * (1.0 - smoothstep(.52, 1.0, age));',
         '  float distFade = smoothstep(1.2, 3.2, dist) * (1.0 - smoothstep(48.0, 92.0, dist));',
         '  vColor = mix(aColor, aColor * vec3(1.06, .88, .66), uPracticals * .68);',
-        '  vAlpha = lifeAlpha * distFade * (.24 + uPracticals * .10 + uMist * .08) * (1.0 - uRain * .74);',
-        '  float sz = aStyle.y * (.52 + age * 1.42) * uPixelRatio * (340.0 / dist);',
+        '  vAlpha = lifeAlpha * distFade * (.21 + uPracticals * .09 + uMist * .07) * (1.0 - uRain * .74);',
+        '  float sz = aStyle.y * (.64 + age * 1.48) * uPixelRatio * (340.0 / dist);',
         '  gl_PointSize = clamp(sz, 2.0, 74.0);',
         '  gl_Position = projectionMatrix * mv;',
         '}',
@@ -2382,7 +2656,7 @@
         'void main(){',
         '  float d = length(gl_PointCoord - .5) * 2.0;',
         '  if (d > 1.0 || vAlpha < .004) discard;',
-        '  float soft = pow(max(0.0, 1.0 - d), 1.9);',
+        '  float soft = pow(max(0.0, 1.0 - d), 1.65);',
         '  gl_FragColor = vec4(vColor, soft * vAlpha);',
         '  #include <colorspace_fragment>',
         '}',
@@ -2440,7 +2714,7 @@
         '  col += shine * spec * 1.74 * day * (1.-rain*.61) * (1.-mist*.45);',
         '  float moonSpec = pow(max(0.,dot(reflect(-moonDir,n),v)),46.) * smoothstep(.24,.74,wave);',
         '  col += vec3(.78,.89,1.0) * moonSpec * 1.15 * night * (1.-rain*.75) * (1.-mist*.55);',
-        '  float shoreRipple = .55 + .45 * sin(p.z * .26 + time * 1.35 + a * .6) * cos(p.x * .19 - time * .85);',
+        '  float shoreRipple = .55 + .45 * sin(p.y * .26 + time * 1.35 + a * .6) * cos(p.x * .19 - time * .85);',
         '  col += vec3(1.0,.66,.32) * pow(shallows,2.1) * shoreRipple * night * (1.-rain*.25) * .30;',
         '  if(reflection>.01){',
         '    vec4 projected = mirrorProject*vec4(vWorld,1.);',
@@ -2629,7 +2903,8 @@
       plumeUniforms.uMist.value = mist;
       plumeUniforms.uPixelRatio.value = curDpr;
       plumeMesh.visible = rain < .96;
-      const rlAlpha = clamp((practicals - .14) / .52, 0, 1) * (1 - rain * .35);
+      const lanternTime = Math.min(1, evening * .48 + night * .86);
+      const rlAlpha = clamp((lanternTime - .18) / .50, 0, 1) * (1 - rain * .35);
       riverLanternGroup.visible = rlAlpha > .02;
       if (riverLanternGroup.visible) {
         rlBodyMat.opacity = .88 * rlAlpha;
@@ -2649,6 +2924,29 @@
         riverLanternMesh.instanceMatrix.needsUpdate = true;
         rlGlowGeo.attributes.position.needsUpdate = true;
       }
+      const slAlpha = clamp((lanternTime - .22) / .48, 0, 1) * (1 - rain * .82);
+      skyLanternGroup.visible = slAlpha > .02;
+      if (skyLanternGroup.visible) {
+        slBodyMat.opacity = .90 * slAlpha;
+        skyLanternUniforms.uAlpha.value = .68 * slAlpha;
+        skyLanternUniforms.uPixelRatio.value = curDpr;
+        for (let i = 0; i < skyLanternSpecs.length; i++) {
+          const s = skyLanternSpecs[i];
+          const age = (elapsed * s.speed + s.phase) % 1;
+          const lx = s.baseX + age * s.driftX + Math.sin(elapsed * .42 + s.phase * 12) * s.sway;
+          const lz = s.baseZ + age * s.driftZ + Math.cos(elapsed * .36 + s.phase * 10) * s.sway;
+          const ly = s.baseY + age * s.maxRise;
+          const sc = Math.min(1, age * 8) * Math.min(1, (1 - age) * 6);
+          slDummy.position.set(lx, ly, lz);
+          slDummy.rotation.set(Math.sin(elapsed * .7 + s.phase * 8) * .07, elapsed * .22 + s.phase * 6, Math.cos(elapsed * .65 + s.phase * 7) * .07);
+          slDummy.scale.setScalar(Math.max(.01, sc));
+          slDummy.updateMatrix();
+          skyLanternMesh.setMatrixAt(i, slDummy.matrix);
+          slGlowPos[i * 3] = lx; slGlowPos[i * 3 + 1] = ly - .04; slGlowPos[i * 3 + 2] = lz;
+        }
+        skyLanternMesh.instanceMatrix.needsUpdate = true;
+        slGlowGeo.attributes.position.needsUpdate = true;
+      }
       lampPool.opacity = practicals * .48;
       reflectedLamp.opacity = practicals * moisture * .52;
       for (const [material, intensity] of nightMaterials) material.emissiveIntensity = .04 + practicals * intensity;
@@ -2656,9 +2954,9 @@
     }
 
     return { collision, blockedAt, clearFraction, vehicleBlocked, surfaceHeight, occluded, footprints, light, sun, water, roadReflection,
-      skyUniforms, shelters, trafficLayout, atmosphere: { lanternHalos, riverLanternGroup, riverLanternCount: riverLanternSpecs.length, plumeMesh, plumeCount: totalPlumes, haloCount: haloAnchors.length },
+      skyUniforms, shelters, trafficLayout, atmosphere: { lanternHalos, riverLanternGroup, riverLanternCount: riverLanternSpecs.length, skyLanternGroup, skyLanternCount: skyLanternSpecs.length, plumeMesh, plumeCount: totalPlumes, haloCount: haloAnchors.length },
       initialTextures: [...Object.values(textures), streetShade], setDetail, updateVisibleStreet };
   }
 
-  window.Tideline = Object.assign(window.Tideline || {}, { build, buildSteps, finishBuild, X, Z, BOUNDS, ROAD, JOBS, HUB, DELIVERY, STASH, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, clamp, distance, angleDiff, rng, nearest, nearestRoad, routeBetween, district });
+  window.Tideline = Object.assign(window.Tideline || {}, { build, buildSteps, finishBuild, X, Z, BOUNDS, ROAD, JOBS, HUB, DELIVERY, STASH, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, STREET_EVENTS, clamp, distance, angleDiff, rng, nearest, nearestRoad, routeBetween, district });
 })();

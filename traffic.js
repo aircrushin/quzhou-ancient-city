@@ -1426,12 +1426,13 @@
         ped.crossingState = 'sidewalk';
         ped.activeCrosswalk = null;
         ped.waitingAtCrosswalk = false;
-        if (!ped.isCrosswalker && ped.idleChance > 0 && random() < ped.idleChance) {
+        const rainIdleScale = state.rain > .42 ? .22 : 1;
+        if (!ped.isCrosswalker && ped.idleChance > 0 && random() < ped.idleChance * rainIdleScale) {
           ped.idleUntil = state.clock + 2.2 + random() * 3.4;
         }
       }
 
-      if (!threat && !escaping && state.clock < (ped.idleUntil ?? 0)) {
+      if (!threat && !escaping && state.rain < .55 && state.clock < (ped.idleUntil ?? 0)) {
         const lookYaw = ped.yaw + Math.sin(state.clock * 0.8 + ped.lookPhase) * 0.012;
         ped.yaw = lookYaw;
         ped.visiblePace = smooth(ped.visiblePace ?? 0, 0, 6.8, dt);
@@ -1444,7 +1445,8 @@
       const legCw = (activeTarget.cross && activePrev.cross && activeTarget.cross === activePrev.cross && activeTarget !== activePrev) ? activeTarget.cross : null;
 
       let waitAtCurb = false;
-      let pace = ped.walk;
+      const rainHurry = state.rain > .38 ? 1 + clamp((state.rain - .38) * .42, 0, .24) : 1;
+      let pace = ped.walk * rainHurry;
 
       if (!threat && !escaping && legCw) {
         const onRoadNow = Boolean(Y?.onAnyRoad?.(ped.x, ped.z, -0.35));

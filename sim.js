@@ -2,7 +2,7 @@
   'use strict';
   const T = window.THREE;
   const D = window.Tideline;
-  const { HUB, CARS, MARINE, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, clamp, distance, angleDiff } = D;
+  const { HUB, CARS, MARINE, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, STREET_EVENTS, clamp, distance, angleDiff } = D;
   const Y = window.QuzhouRoadData || window.YulinRoadData;
   const RACE_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 0];
   const ROAD_KINDS = ['hatch', 'coupe', 'sedan', 'van'];
@@ -18,11 +18,45 @@
     18: '暮鼓晨钟交替，水亭门城楼渐次亮起暖灯。',
     21: '戌末夜色沉静，信安湖灯塔与古城檐灯交相辉映。',
   };
+  const LANTERN_WISHES = [
+    '一盏祈福孔明灯乘着晚风升入星河，愿南孔古城岁岁长安。',
+    '暖灯扶摇映照信安湖波，愿来往行人与古城烟火皆顺遂。',
+    '纸灯载愿越过水亭门飞檐，南孔圣地清风伴你漫游。',
+    '灯火点亮信安夜空，愿下一段衢州街巷旅途惊喜常伴。',
+    '湖风托起祈愿明灯，与远岸灯塔遥相守望。',
+  ];
+  const CHATTER_STALLS = [
+    { x: 328.2, y: 2.35, z: 107.0, zone: 'market', who: '三头一掌摊主' },
+    { x: 328.2, y: 2.35, z: 122.0, zone: 'market', who: '炭炉烤饼师傅' },
+    { x: 73.3, y: 2.45, z: 132.5, zone: 'market', who: '马站底食坊掌柜' },
+    { x: 161.4, y: 2.55, z: -8.5, zone: 'kongmiao', who: '南孔家庙游人' },
+    { x: 33.0, y: 2.55, z: -94.0, zone: 'heritage', who: '钟楼底老街坊' },
+    { x: 330.6, y: 2.35, z: 148.5, zone: 'lake', who: '信安湖灯舫' },
+  ];
+  const CHATTER_LINES = {
+    marketDay: ['刚出炉的梅干菜烤饼咯，外酥里香！', '衢州三头一掌现卤现拌，微辣中辣任选！', '冰镇薄荷水晶糕，解辣又清爽！'],
+    marketNight: ['晚市最热闹，烤饼配鸭头趁热吃！', '夜市灯亮啦，来碗热粉干再逛信安湖！', '刚出炉的梅干菜烤饼咯，外酥里香！'],
+    marketRain: ['下雨啦，快进棚里喝碗热粉干暖暖身！', '雨天配点热辣鸭头最驱寒！'],
+    kongmiao: ['有礼衢州，进棂星门先放轻脚步吧。', '大成殿前的檀香闻着真静心。'],
+    fushanDay: ['府山桂花开了，一路都是甜丝丝的香。', '沿着松影小径上去就能望见钟灵塔。'],
+    lakeMist: ['晨雾里严家淤灯塔若隐若现，真好看。', '清早湖面起轻岚，像展开了一幅水墨画。'],
+    lakeNight: ['快看！湖面河灯漂起来了，天上还有孔明灯。', '去湖边放一盏祈福孔明灯吧，晚风正好。'],
+    lakeDay: ['从东岸码头坐游艇，一会儿就到严家淤岛。', '信安湖风真凉爽，远处的白鹭也在滑翔。'],
+    shuitingNight: ['晚风正好，水亭门城楼的灯笼全亮啦。', '提着灯笼走三街七巷，特别有古城味道。'],
+    shuitingMist: ['清早衢江起薄雾，城墙看着像水墨画一样。', '水亭门青石板带点露水，清晨最安静。'],
+    shuitingDay: ['三街七巷里藏着不少老字号，慢走细逛。', '天王塔院那边拍照特别出片。'],
+    rainStreet: ['青石板沾了雨，撑着油纸伞走最像江南。', '突然下阵雨了，快走几步别淋湿！', '雨后路面反光，把古城檐灯都映出来了。'],
+    nightStreet: ['夏夜林子里有萤火虫，信安湖还能放孔明灯。', '晚上的衢州古城慢悠悠的，逛着真惬意。'],
+    dayStreet: ['今天天气真好，适合环古城兜一圈。', '听说府东街工坊能把爱车改得特别帅。'],
+  };
   const WORKSHOP = Y?.WORKSHOP_SPOT
     ? { ...Y.WORKSHOP_SPOT, workshop: true }
     : { x: 276.1, z: 138.0, label: '府东街改装工坊', workshop: true };
   const WEATHER = [
-    { name: '晴朗', rain: 0, wetness: .02 }, { name: '雨后', rain: 0, wetness: .62 }, { name: '阵雨', rain: 1, wetness: .92 },
+    { id: 'clear', name: '晴朗', rain: 0, wetness: .02, mist: 0 },
+    { id: 'mist', name: '晨雾', rain: 0, wetness: .24, mist: 1 },
+    { id: 'after-rain', name: '雨后', rain: 0, wetness: .62, mist: .18 },
+    { id: 'rain', name: '阵雨', rain: 1, wetness: .92, mist: .12 },
   ];
   const guideVoice = '衢州古城导览';
   const PI = Math.PI;
@@ -173,6 +207,7 @@
     const random = D.rng(87153);
     const player = factory.person('#387a80', '#303a46', '#c48b6b', true);
     const targetVector = new T.Vector3();
+    const chatterVector = new T.Vector3();
     const focus = new T.Vector3();
     const desired = new T.Vector3();
     const cameraPivot = new T.Vector3();
@@ -181,6 +216,8 @@
     if (!Array.isArray(progress.tapes)) progress.tapes = [];
     if (!Array.isArray(progress.photos)) progress.photos = [];
     if (!Array.isArray(progress.spots)) progress.spots = [];
+    if (!(Number.isFinite(progress.lanternsReleased) && progress.lanternsReleased >= 0)) progress.lanternsReleased = 0;
+    if (!(Number.isFinite(progress.eventsDone) && progress.eventsDone >= 0)) progress.eventsDone = 0;
     if (!(Number.isFinite(progress.raceBest) && progress.raceBest > 0)) progress.raceBest = 0;
     if (!(Number.isFinite(progress.lakeRaceBest) && progress.lakeRaceBest > 0)) progress.lakeRaceBest = 0;
     if (!ROAD_KINDS.includes(progress.favoriteCar)) progress.favoriteCar = 'coupe';
@@ -191,13 +228,17 @@
       active: false, throttle: false, station: '', playingTape: null, cameraMode: 0, viewYaw: HUB.angle,
       freeYaw: 0, viewPitch: 0, lookHeld: false, lastLook: -10, shake: 0, night: 0, drift: 0, driftLast: -100,
       driftGrace: 0, driftBanked: null,
-      weather: 0, rain: 0, wetness: .02, sheltered: false,
+      weather: 0, rain: 0, wetness: .02, mist: 0, sheltered: false, ambience: null,
       cameraBump: 0,
       nextTapePing: 2,
       lastBellHour: -1,
       buff: null,
       lastHorn: -10, hornUntil: 0, lastBellRing: -10,
+      chatter: null, nextChatter: 4.5, lastChatterLine: '', releasedLanternsCount: 0,
+      streetEvent: null, nextEventAt: 16, lastEventId: '',
+      rest: null, lastRestBuffAt: -100,
     };
+    const pedEnv = { rain: 0, night: 0, clock: 0, sheltered: false };
     const showroom = {
       active: false, kind: 'taxi', yaw: .68, pitch: .23, distance: 5.7,
       night: false, savedHour: null, dragging: false, car: null,
@@ -206,7 +247,7 @@
       active: false, targetX: HUB.x, targetY: 1.5, targetZ: HUB.z,
       yaw: .55, pitch: .22, distance: 8.5, fov: 50,
       filter: 'none', postcard: true, carLights: 'auto', focusCar: null, subject: null, lastCaptured: null,
-      savedHour: null, savedWeather: null, savedRain: null, savedWetness: null, savedFov: 57,
+      savedHour: null, savedWeather: null, savedRain: null, savedWetness: null, savedMist: null, savedFov: 57,
       dragging: false,
     };
     audio.setEnabled(progress.sound);
@@ -290,6 +331,7 @@
     const tapeRose = new T.Color('#f59cc6');
     const raceMint = new T.Color('#66f2c7');
     const raceGold = new T.Color('#ffd663');
+    const eventCoral = new T.Color('#ff9e6d');
     function luminous(color) {
       return new T.MeshBasicMaterial({ color, toneMapped: false, depthWrite: false });
     }
@@ -377,6 +419,351 @@
       return { spot, group, ringMat, gemMat, gem, index };
     });
 
+    const restRingGeo = new T.RingGeometry(.92, 1.14, 28).rotateX(-PI / 2);
+    const restSpotProps = (REST_SPOTS || []).map((spot, index) => {
+      const group = new T.Group();
+      const ringMat = new T.MeshBasicMaterial({
+        color: '#7ee2c6', transparent: true, opacity: .28, depthWrite: false,
+        blending: T.AdditiveBlending, side: T.DoubleSide, toneMapped: false,
+      });
+      const ring = new T.Mesh(restRingGeo, ringMat);
+      ring.position.y = .08;
+      group.add(ring);
+      const baseY = Math.max(spot.x > 320 ? .22 : 0, world.surfaceHeight(spot.x, spot.z));
+      group.position.set(spot.x, baseY, spot.z);
+      group.visible = false;
+      group.traverse(object => { object.layers.set(1); object.castShadow = false; object.receiveShadow = false; });
+      scene.add(group);
+      return { spot, group, ringMat, index };
+    });
+
+    const eventNpc = factory.person('#c86446', '#333e4c', '#d8a680', false, 3, true);
+    eventNpc.root.visible = false;
+    const eventBeacon = (() => {
+      const group = new T.Group();
+      const ringMat = new T.MeshBasicMaterial({
+        color: eventCoral, transparent: true, opacity: .68, depthWrite: false,
+        blending: T.AdditiveBlending, side: T.DoubleSide, toneMapped: false,
+      });
+      const fillMat = new T.MeshBasicMaterial({
+        color: eventCoral, transparent: true, opacity: .15, depthWrite: false,
+        blending: T.AdditiveBlending, side: T.DoubleSide, toneMapped: false,
+      });
+      const gemMat = new T.MeshBasicMaterial({ color: '#ffd3b8', transparent: true, opacity: .94, toneMapped: false });
+      const beamMat = new T.MeshBasicMaterial({
+        color: eventCoral, transparent: true, opacity: .18, depthWrite: false,
+        blending: T.AdditiveBlending, side: T.DoubleSide, toneMapped: false,
+      });
+      const ring = new T.Mesh(new T.RingGeometry(1.18, 1.52, 32).rotateX(-PI / 2), ringMat);
+      ring.position.y = .10;
+      const fill = new T.Mesh(new T.CircleGeometry(1.18, 32).rotateX(-PI / 2), fillMat);
+      fill.position.y = .08;
+      const gem = new T.Mesh(new T.OctahedronGeometry(.27, 0), gemMat);
+      gem.position.y = 2.68;
+      const beam = new T.Mesh(new T.CylinderGeometry(.09, .38, 16, 10, 1, true), beamMat);
+      beam.position.y = 8.0;
+      group.add(ring, fill, gem, beam);
+      group.visible = false;
+      group.traverse(object => { object.layers.set(1); object.castShadow = false; object.receiveShadow = false; });
+      scene.add(group);
+      return { group, ring, ringMat, fillMat, gem, beam, beamMat };
+    })();
+
+    const releasedLanterns = [];
+    const relLanternBodyGeo = new T.CylinderGeometry(.30, .20, .54, 6);
+    const relLanternCoreGeo = new T.SphereGeometry(.095, 6, 6);
+    const relLanternBodyMat = new T.MeshBasicMaterial({ color: '#ffd07a', transparent: true, opacity: .94, toneMapped: false });
+    const relLanternCoreMat = new T.MeshBasicMaterial({ color: '#fff4cf', toneMapped: false });
+    const relLanternGlowTex = (() => {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 64;
+      const cx = cv.getContext('2d');
+      const g = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(255, 245, 205, 1)');
+      g.addColorStop(.32, 'rgba(255, 188, 90, .68)');
+      g.addColorStop(.70, 'rgba(255, 138, 48, .18)');
+      g.addColorStop(1, 'rgba(255, 138, 48, 0)');
+      cx.fillStyle = g;
+      cx.fillRect(0, 0, 64, 64);
+      const tex = new T.CanvasTexture(cv);
+      tex.colorSpace = T.SRGBColorSpace;
+      return tex;
+    })();
+    const relLanternGlowMat = new T.SpriteMaterial({
+      map: relLanternGlowTex, color: '#ffbf64', transparent: true, opacity: .78,
+      depthWrite: false, blending: T.AdditiveBlending, toneMapped: false,
+    });
+    function releaseSkyLantern(origin = protagonist(), yaw = state.viewYaw) {
+      if (releasedLanterns.length >= 16) {
+        const oldest = releasedLanterns.shift();
+        scene.remove(oldest.group);
+      }
+      const group = new T.Group();
+      const body = new T.Mesh(relLanternBodyGeo, relLanternBodyMat);
+      const core = new T.Mesh(relLanternCoreGeo, relLanternCoreMat);
+      core.position.y = -.16;
+      const glow = new T.Sprite(relLanternGlowMat);
+      glow.scale.set(2.2, 2.2, 1);
+      group.add(body, core, glow);
+      const launchX = origin.x + Math.sin(yaw) * 1.45;
+      const launchZ = origin.z + Math.cos(yaw) * 1.45;
+      const baseY = world.surfaceHeight(launchX, launchZ) + 1.48;
+      group.position.set(launchX, baseY, launchZ);
+      group.scale.setScalar(.25);
+      scene.add(group);
+      const item = {
+        group, glow, age: 0, maxAge: 52,
+        vx: .52 + (random() - .25) * .32, vz: (random() - .5) * .42, vy: 1.48 + random() * .38,
+        phase: random() * PI * 2, spin: (random() - .5) * .45,
+      };
+      releasedLanterns.push(item);
+      state.releasedLanternsCount++;
+      progress.lanternsReleased = (progress.lanternsReleased || 0) + 1;
+      onSave();
+      return item;
+    }
+    function stepReleasedLanterns(dt) {
+      for (let i = releasedLanterns.length - 1; i >= 0; i--) {
+        const item = releasedLanterns[i];
+        item.age += dt;
+        if (item.age >= item.maxAge || item.group.position.y > 105) {
+          scene.remove(item.group);
+          releasedLanterns.splice(i, 1);
+          continue;
+        }
+        const lift = item.vy * (0.72 + Math.min(.55, item.age * .06));
+        item.group.position.x += (item.vx + Math.sin(item.age * .65 + item.phase) * .28) * dt;
+        item.group.position.z += (item.vz + Math.cos(item.age * .58 + item.phase) * .24) * dt;
+        item.group.position.y += lift * dt;
+        item.group.rotation.set(Math.sin(item.age * .9 + item.phase) * .08, item.age * item.spin, Math.cos(item.age * .85 + item.phase) * .08);
+        const appear = clamp(item.age / .65, 0, 1);
+        const fade = clamp((item.maxAge - item.age) / 6.0, 0, 1);
+        const sc = (.25 + .75 * appear) * fade;
+        item.group.scale.setScalar(Math.max(.02, sc));
+        const flicker = 2.0 + Math.sin(state.clock * 4.2 + item.phase) * .28;
+        item.glow.scale.set(flicker, flicker, 1);
+      }
+    }
+
+    function clearEventVisuals() {
+      eventNpc.root.visible = false;
+      eventNpc.waving = false;
+      eventBeacon.group.visible = false;
+    }
+    function cancelStreetEvent(silent = false) {
+      const ev = state.streetEvent;
+      if (!ev) return false;
+      const wasActive = ev.phase === 'active' || ev.phase === 'needCar';
+      state.streetEvent = null;
+      clearEventVisuals();
+      state.nextEventAt = state.clock + 28 + random() * 14;
+      state.target = target();
+      if (!silent && wasActive) {
+        announce('街头奇遇', '已放弃当前委托', '在古城漫游时仍会陆续遇到新的街头奇遇。', 3.0);
+        audio.note();
+      }
+      return true;
+    }
+    function spawnStreetEvent(forcedId = null) {
+      if (!STREET_EVENTS?.length) return null;
+      let def = null;
+      if (forcedId) {
+        def = STREET_EVENTS.find(item => item.id === forcedId) || null;
+        if (!def) return null;
+        state.streetEvent = null;
+        clearEventVisuals();
+      } else {
+        if (state.streetEvent || state.mode !== 'roam' || state.race?.active || state.rest?.active || showroom.active || photo.active || state.boat) return null;
+        const p = protagonist();
+        const pool = STREET_EVENTS.filter(item => item.id !== state.lastEventId);
+        const list = pool.length ? pool : STREET_EVENTS;
+        const inBand = list.filter(item => {
+          const d = distance(p, item);
+          return d >= 28 && d <= 245;
+        });
+        const candidates = inBand.length ? inBand : list.filter(item => distance(p, item) >= 20);
+        const source = candidates.length ? candidates : list;
+        let totalW = 0;
+        const weights = source.map(item => {
+          const d = distance(p, item);
+          let w = 1 / (1 + d / 160);
+          if (item.preferRain && state.rain > .35) w *= 2.6;
+          if (item.preferNight && state.night > .35) w *= 2.0;
+          if (item.kind === 'photo' && !progress.photos.includes(item.photoSpotId)) w *= 1.45;
+          totalW += w;
+          return w;
+        });
+        let pick = random() * totalW;
+        def = source[source.length - 1];
+        for (let i = 0; i < source.length; i++) {
+          pick -= weights[i];
+          if (pick <= 0) { def = source[i]; break; }
+        }
+      }
+      const near = D.nearestRoad(def.x, def.z);
+      const lookPt = near && distance(def, near) > 1.2 ? near : null;
+      const spot = findClearPersonSpot({ x: def.x, z: def.z }, lookPt);
+      eventNpc.x = spot.x;
+      eventNpc.z = spot.z;
+      eventNpc.yaw = spot.yaw;
+      eventNpc.elevation = world.surfaceHeight(spot.x, spot.z);
+      eventNpc.visiblePace = 0;
+      eventNpc.waving = false;
+      eventNpc.umbrellaOpen = state.rain > .32 ? 1 : 0;
+      eventNpc.lanternOpen = state.night > .36 && state.rain < .42 ? 1 : 0;
+      state.lastEventId = def.id;
+      state.streetEvent = {
+        def, phase: 'offered', x: spot.x, z: spot.z, yaw: spot.yaw,
+        destX: def.destX, destZ: def.destZ,
+        hailed: false, expiresAt: state.clock + 145, startedAt: 0, deadline: 0, roughHits: 0, farewellUntil: 0,
+      };
+      return state.streetEvent;
+    }
+    function beginActiveStreetEvent(ev) {
+      ev.phase = 'active';
+      ev.startedAt = state.clock;
+      ev.deadline = ev.def.timeLimit > 0 ? state.clock + ev.def.timeLimit : 0;
+      ev.roughHits = 0;
+      eventNpc.waving = false;
+      if (ev.def.kind === 'ride') eventNpc.root.visible = false;
+      state.target = target();
+    }
+    function acceptStreetEvent(ev) {
+      if (!ev || ev.phase !== 'offered') return false;
+      state.landmarkGuide = null;
+      state.tapeGuide = null;
+      state.workshopGuide = false;
+      audio.start();
+      audio.note();
+      say(ev.def.speaker, ev.def.acceptLine, 6.4);
+      if (ev.def.kind === 'ride' && !state.vehicle) {
+        ev.phase = 'needCar';
+        ev.expiresAt = state.clock + 95;
+        state.target = target();
+        announce('街头奇遇 · 顺风车', ev.def.name, '请上车或按 V 召车带乘客前往' + ev.def.destName + '。', 4.6);
+      } else {
+        beginActiveStreetEvent(ev);
+        if (ev.def.kind === 'ride') {
+          announce('街头奇遇 · 顺风车', ev.def.name, '乘客已上车！平稳驶往' + ev.def.destName + '（奖励 ' + cashText(ev.def.reward) + '）。', 4.4);
+        } else if (ev.def.kind === 'courier') {
+          announce('街头奇遇 · 急件配送', ev.def.name, '请在 ' + ev.def.timeLimit + ' 秒内送达' + ev.def.destName + '（奖励 ' + cashText(ev.def.reward) + '）。', 4.4);
+        } else {
+          announce('街头奇遇 · 旅拍委托', ev.def.name, '前往' + ev.def.destName + '，按 P 进拍照模式框住地标按空格交稿。', 4.8);
+        }
+      }
+      return true;
+    }
+    function completeStreetEvent(ev, bonus = 0, bonusNote = '') {
+      if (!ev) return null;
+      const totalReward = ev.def.reward + bonus;
+      progress.cash += totalReward;
+      progress.eventsDone = (progress.eventsDone || 0) + 1;
+      onSave();
+      audio.start();
+      audio.complete();
+      say(ev.def.speaker, ev.def.completeLine, 6.4);
+      const body = '酬劳 ' + cashText(totalReward) + (bonusNote ? '（' + bonusNote + '）' : '') + ' · 累计奇遇 ' + progress.eventsDone + ' 次';
+      announce('奇遇委托达成', ev.def.name, body, 5.0);
+      if (ev.def.kind === 'ride') {
+        const dropSpot = findClearPersonSpot({ x: ev.destX, z: ev.destZ }, protagonist());
+        eventNpc.x = dropSpot.x;
+        eventNpc.z = dropSpot.z;
+        eventNpc.yaw = dropSpot.yaw;
+        eventNpc.elevation = world.surfaceHeight(dropSpot.x, dropSpot.z);
+        ev.phase = 'farewell';
+        ev.x = dropSpot.x;
+        ev.z = dropSpot.z;
+        ev.farewellUntil = state.clock + 5.5;
+        eventBeacon.group.visible = false;
+      } else {
+        state.streetEvent = null;
+        clearEventVisuals();
+      }
+      state.nextEventAt = state.clock + 30 + random() * 18;
+      state.target = target();
+      return { name: ev.def.name, reward: totalReward, bonus };
+    }
+    function failStreetEvent(ev, reason) {
+      if (!ev) return;
+      state.streetEvent = null;
+      clearEventVisuals();
+      state.nextEventAt = state.clock + 24 + random() * 14;
+      state.target = target();
+      audio.note();
+      announce('街头奇遇结束', ev.def.name, reason, 4.0);
+    }
+    function stepStreetEvent(dt) {
+      if (state.mode !== 'roam' || state.race?.active || showroom.active) return;
+      if (!state.streetEvent) {
+        if (!photo.active && !state.boat && !state.rest?.active && state.clock >= state.nextEventAt) spawnStreetEvent();
+        return;
+      }
+      const ev = state.streetEvent;
+      const p = protagonist();
+      if (ev.phase === 'farewell') {
+        eventNpc.waving = true;
+        eventNpc.yaw = angleDiff(eventNpc.yaw + angleDiff(heading(ev, p), eventNpc.yaw) * clamp(dt * 4, 0, 1), 0);
+        if (state.clock >= ev.farewellUntil) {
+          state.streetEvent = null;
+          clearEventVisuals();
+        }
+        return;
+      }
+      if (ev.phase === 'offered') {
+        const d = distance(p, ev);
+        eventNpc.waving = d < 34;
+        if (d < 26) eventNpc.yaw = angleDiff(eventNpc.yaw + angleDiff(heading(ev, p), eventNpc.yaw) * clamp(dt * 4.5, 0, 1), 0);
+        if (!ev.hailed && d < 46 && !photo.active) {
+          ev.hailed = true;
+          state.chatter = null;
+          say(ev.def.speaker, ev.def.hailLine, 6.2);
+          audio.note();
+        }
+        if (state.clock >= ev.expiresAt || d > 360) {
+          state.streetEvent = null;
+          clearEventVisuals();
+          state.nextEventAt = state.clock + 24 + random() * 14;
+        }
+        return;
+      }
+      if (ev.phase === 'needCar') {
+        const d = distance(p, ev);
+        eventNpc.waving = d < 34;
+        if (d < 26) eventNpc.yaw = angleDiff(eventNpc.yaw + angleDiff(heading(ev, p), eventNpc.yaw) * clamp(dt * 4.5, 0, 1), 0);
+        if (state.vehicle && d < 13 && state.vehicle.speed < 8.5) {
+          beginActiveStreetEvent(ev);
+          audio.note();
+          say(ev.def.speaker, ev.def.acceptLine, 5.6);
+          announce('街头奇遇 · 顺风车', ev.def.name, '乘客已上车！平稳驶往' + ev.def.destName + '（奖励 ' + cashText(ev.def.reward) + '）。', 4.4);
+          return;
+        }
+        if (state.clock >= ev.expiresAt || d > 220) {
+          failStreetEvent(ev, '乘客久等没见到车，先沿着街边步行离开了。');
+        }
+        return;
+      }
+      if (ev.phase === 'active') {
+        eventNpc.waving = false;
+        if (ev.def.kind === 'courier') {
+          const rem = ev.deadline - state.clock;
+          if (distance(p, { x: ev.destX, z: ev.destZ }) < (state.vehicle ? 11.5 : 7.0)) {
+            const fast = rem >= 18 ? ev.def.bonus : 0;
+            completeStreetEvent(ev, fast, fast ? '热送加奖 +' + cashText(fast) : '');
+          } else if (rem <= 0) {
+            failStreetEvent(ev, '超出了热送时限，下次再帮老街坊搭把手吧。');
+          }
+        } else if (ev.def.kind === 'ride') {
+          const rem = ev.deadline - state.clock;
+          if (state.vehicle && distance(state.vehicle, { x: ev.destX, z: ev.destZ }) < 12.5 && state.vehicle.speed < 5.5) {
+            const tip = ev.roughHits === 0 ? ev.def.bonus : 0;
+            completeStreetEvent(ev, tip, tip ? '平稳护送小费 +' + cashText(tip) : '');
+          } else if (rem <= 0) {
+            failStreetEvent(ev, '超出约定时间，乘客在路边先下车赶路了。');
+          }
+        }
+      }
+    }
+
     function makeRaceGate(color, opacity = .86, scale = 1) {
       const group = new T.Group();
       const frameMat = new T.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, depthWrite: false, toneMapped: false });
@@ -420,6 +807,7 @@
       return state.boat ?? state.vehicle ?? player;
     }
     function context() {
+      if (state.rest?.active) return null;
       if (state.boat) {
         const boat = state.boat;
         const deck = marine.landing(boat);
@@ -435,6 +823,13 @@
       }
       const taxiContext = taxi.context();
       if (taxiContext) return taxiContext;
+      if (state.mode === 'roam' && !state.race?.active && state.streetEvent?.phase === 'offered') {
+        const ev = state.streetEvent;
+        const p = protagonist();
+        if (distance(p, ev) < (state.vehicle ? 8.8 : 5.8) && (!state.vehicle || state.vehicle.speed < 6.5)) {
+          return { label: '接下奇遇 · ' + ev.def.name, shortLabel: '奇遇', kind: 'eventAccept', event: ev };
+        }
+      }
       if (distance(protagonist(), WORKSHOP) < 8.4 && (!state.vehicle || state.vehicle.speed < 3.2)) {
         return { label: '进入' + WORKSHOP.label, kind: 'workshop' };
       }
@@ -461,6 +856,17 @@
         }
         if (nearSpot) {
           return { label: nearSpot.actionLabel, shortLabel: nearSpot.shortLabel, kind: 'streetSpot', spot: nearSpot };
+        }
+      }
+      if (REST_SPOTS?.length && !state.race?.active) {
+        let nearRest = null;
+        let restGap = 4.6;
+        for (const spot of REST_SPOTS) {
+          const d = distance(player, spot);
+          if (d < restGap) { restGap = d; nearRest = spot; }
+        }
+        if (nearRest) {
+          return { label: '坐下小憩 · ' + nearRest.name, shortLabel: '小憩', kind: 'restSpot', spot: nearRest };
         }
       }
       let candidate = null;
@@ -537,6 +943,12 @@
         case 'streetSpot':
           interactStreetSpot(action.spot);
           break;
+        case 'restSpot':
+          enterRestMode(action.spot);
+          break;
+        case 'eventAccept':
+          acceptStreetEvent(action.event);
+          break;
         case 'exit':
           tryExit(state.vehicle);
           break;
@@ -569,6 +981,304 @@
         return null;
       }
       return state.buff;
+    }
+    const REST_TIME_SCALES = [1, 15, 60];
+    const REST_DISTRICT_POEMS = {
+      '水亭门古街': '青砖城楼临水而立，看三街七巷檐灯渐次亮起。',
+      '孔氏南宗家庙': '古柏森森红墙静谧，清风送来千年南孔礼韵。',
+      '府山公园': '林荫轻摇鸟语隐约，钟灵塔影斜映翠色山坡。',
+      '信安湖': '湖波轻漾天光入水，远山剪影随云影缓缓移步。',
+      '马站底 · 上下街': '老街人声与炭炉香气交织，暂歇片刻尽赏古城烟火。',
+    };
+    function restPoemFor(point, kind) {
+      if (kind === 'boat') return '画舫轻泊信安湖心，随波听水静观云卷云舒与灯塔流光。';
+      const area = D.district(point);
+      if (REST_DISTRICT_POEMS[area]) return REST_DISTRICT_POEMS[area];
+      if (kind === 'car') return '暂熄引擎停靠老街一隅，在车窗光影里静观衢州古城四时流转。';
+      return '暂歇脚步倚风而坐，在青石古巷与江风流云间独享片刻宁静。';
+    }
+    let restAmbientMuted = false;
+    function ambientDef(id) {
+      const list = REST_AMBIENTS || [];
+      return list.find(item => item.id === id) || list.find(item => item.id === 'off') || { id: 'off', name: '氛围静音', desc: '关闭休憩白噪音，静听古城原生街景。' };
+    }
+    function pickRestAmbient(kind, spot, pos) {
+      if (spot?.ambient) return spot.ambient;
+      if (state.weather === 3 || state.rain > .35) return 'rain';
+      if (kind === 'boat' || (pos?.x ?? 0) > 280) return 'lake';
+      const area = D.district(pos || player);
+      if (area === '孔氏南宗家庙' || area === '府山公园') return 'temple';
+      if (area === '水亭门古街') return 'lake';
+      return 'tea';
+    }
+    function enterRestMode(explicitSpot = null) {
+      if (state.rest?.active) return true;
+      if (state.race?.active) {
+        announce('休息模式', '赛事进行中', '完成或按 Backspace 终止计时赛后再小憩。', 2.4);
+        return false;
+      }
+      if (state.streetEvent && (state.streetEvent.phase === 'active' || state.streetEvent.phase === 'needCar')) {
+        announce('休息模式', '奇遇进行中', '先完成或按 Backspace 取消当前街头奇遇后再休息。', 2.6);
+        return false;
+      }
+      if (state.mode === 'taxi' && taxi.state.anim) return false;
+      let kind = 'ground';
+      let spot = null;
+      let title = '';
+      let poem = '';
+      let savedPos = null;
+      let orbitOffset = -.38;
+      if (state.vehicle) {
+        if (Math.abs(state.vehicle.speed) > 1.8) {
+          announce('休息模式', '请先停稳车辆', '减速停稳后按 Z 即可在车内停车赏景。', 2.4);
+          return false;
+        }
+        const car = state.vehicle;
+        car.vx = car.vz = car.speed = car.pace = car.brake = car.reverseWait = car.turnSignal = 0;
+        state.throttle = false;
+        state.drift = state.driftGrace = 0;
+        kind = 'car';
+        title = '停车赏景 · ' + car.model.name;
+        poem = restPoemFor(car, 'car');
+        orbitOffset = .52;
+        state.viewPitch = .06;
+      } else if (state.boat) {
+        if (Math.abs(state.boat.speed) > 1.8) {
+          announce('休息模式', '请先停稳船艇', '按 SPACE 停稳船艇后按 Z 即可泛舟听水。', 2.4);
+          return false;
+        }
+        const boat = state.boat;
+        boat.vx = boat.vz = boat.speed = boat.steer = boat.trim = 0;
+        boat.throttle = boat.brake = false;
+        state.throttle = false;
+        kind = 'boat';
+        title = '泛舟听水 · ' + boat.name;
+        poem = restPoemFor(boat, 'boat');
+        orbitOffset = .48;
+        state.viewPitch = .08;
+      } else {
+        spot = explicitSpot;
+        if (!spot && REST_SPOTS?.length) {
+          let bestGap = 6.5;
+          for (const item of REST_SPOTS) {
+            const d = distance(player, item);
+            if (d < bestGap) { bestGap = d; spot = item; }
+          }
+        }
+        if (spot) {
+          kind = 'bench';
+          savedPos = { x: spot.exitX, z: spot.exitZ, yaw: spot.yaw };
+          player.x = spot.seatX;
+          player.z = spot.seatZ;
+          player.yaw = spot.yaw;
+          player.vx = player.vz = player.walking = 0;
+          player.sitting = true;
+          player.sitHeight = spot.seatY ?? .49;
+          player.sitHasBack = spot.style !== 'stone';
+          state.viewYaw = spot.yaw;
+          state.viewPitch = spot.camPitch ?? .06;
+          title = spot.name;
+          poem = spot.poem;
+          orbitOffset = spot.camOrbit ?? -.24;
+        } else {
+          kind = 'ground';
+          savedPos = { x: player.x, z: player.z, yaw: player.yaw };
+          player.vx = player.vz = player.walking = 0;
+          player.sitting = true;
+          player.sitHeight = 0;
+          player.sitHasBack = false;
+          state.viewYaw = player.yaw;
+          state.viewPitch = .05;
+          title = D.district(player) + ' · 歇脚小憩';
+          poem = restPoemFor(player, 'ground');
+          orbitOffset = -.42;
+        }
+      }
+      state.freeYaw = 0;
+      state.chatter = null;
+      const chosenAmbient = restAmbientMuted ? 'off' : pickRestAmbient(kind, spot, state.vehicle ?? state.boat ?? player);
+      state.rest = {
+        active: true, kind, spot, title, poem,
+        startedAt: state.clock, savedPos,
+        timeScale: 1, orbitOffset, uiHidden: false, restoredBuff: false, ambient: chosenAmbient,
+      };
+      state.lastLook = state.clock - 3.2;
+      audio.start();
+      audio.setAmbient?.(chosenAmbient);
+      audio.templeChime?.();
+      return true;
+    }
+    function exitRestMode(silent = false) {
+      const rest = state.rest;
+      if (!rest?.active) return false;
+      state.rest = null;
+      audio.setAmbient?.('off');
+      if (rest.kind === 'bench' && rest.savedPos && !state.vehicle && !state.boat) {
+        player.x = rest.savedPos.x;
+        player.z = rest.savedPos.z;
+        player.yaw = rest.savedPos.yaw;
+      }
+      player.sitting = false;
+      player.sitHeight = 0;
+      player.sitHasBack = false;
+      player.vx = player.vz = player.walking = 0;
+      if (!state.vehicle && !state.boat) {
+        state.viewYaw = player.yaw;
+        state.viewPitch = 0;
+      } else {
+        state.freeYaw = 0;
+        state.viewPitch = 0;
+      }
+      if (!silent) audio.note();
+      return true;
+    }
+    function toggleRestMode() {
+      if (state.rest?.active) return exitRestMode(false);
+      return enterRestMode(null);
+    }
+    function setRestTimeScale(scale) {
+      if (!state.rest?.active) return false;
+      const next = REST_TIME_SCALES.includes(Number(scale)) ? Number(scale) : 1;
+      state.rest.timeScale = next;
+      audio.note();
+      return true;
+    }
+    function cycleRestTimeScale() {
+      if (!state.rest?.active) return false;
+      const idx = REST_TIME_SCALES.indexOf(state.rest.timeScale || 1);
+      const next = REST_TIME_SCALES[(idx + 1) % REST_TIME_SCALES.length];
+      state.rest.timeScale = next;
+      audio.note();
+      return true;
+    }
+    function toggleRestUi() {
+      if (!state.rest?.active) return false;
+      state.rest.uiHidden = !state.rest.uiHidden;
+      return state.rest.uiHidden;
+    }
+    function setRestAmbient(id, announceChange = false) {
+      if (!state.rest?.active) return false;
+      const def = ambientDef(id);
+      state.rest.ambient = def.id;
+      restAmbientMuted = def.id === 'off';
+      audio.start();
+      audio.setAmbient?.(def.id);
+      if (announceChange) {
+        announce('休憩氛围音', def.name, def.desc, 2.2);
+        audio.note();
+      }
+      return def.id;
+    }
+    function cycleRestAmbient() {
+      if (!state.rest?.active) return false;
+      const order = (REST_AMBIENTS || []).map(item => item.id);
+      if (!order.length) return false;
+      const idx = order.indexOf(state.rest.ambient || 'off');
+      const nextId = order[(idx + 1) % order.length];
+      return setRestAmbient(nextId, true);
+    }
+    function ambientStatus() {
+      return {
+        id: audio.getAmbient?.() ?? 'off',
+        gain: audio.getAmbientGain?.() ?? 0,
+        muted: restAmbientMuted,
+      };
+    }
+    function resolveRestSpot(spotOrId) {
+      if (!spotOrId) return null;
+      if (typeof spotOrId === 'string') return REST_SPOTS?.find(item => item.id === spotOrId) || null;
+      return spotOrId;
+    }
+    function setRestSpotTarget(spotOrId) {
+      const spot = resolveRestSpot(spotOrId);
+      if (!spot || state.mode === 'taxi' || state.race?.active) return false;
+      return setLandmarkTarget({
+        id: spot.id,
+        kind: 'restSpot',
+        name: spot.name,
+        x: spot.exitX ?? spot.x,
+        z: spot.exitZ ?? spot.z,
+        desc: '已抵达' + spot.name + '，按 E 或 Z 坐下小憩。',
+      });
+    }
+    function fastTravelToRestSpot(spotOrId) {
+      const spot = resolveRestSpot(spotOrId);
+      if (!spot || state.mode === 'taxi' || state.race?.active) return false;
+      if (state.rest?.active) {
+        if (state.rest.spot?.id === spot.id) {
+          updateCamera(0, true);
+          return true;
+        }
+        exitRestMode(true);
+      }
+      if (state.boat) {
+        state.boat.speed = state.boat.vx = state.boat.vz = state.boat.steer = state.boat.trim = 0;
+        state.boat.throttle = state.boat.brake = false;
+        state.boat = null;
+      }
+      if (state.vehicle) {
+        const prev = state.vehicle;
+        prev.type = 'parked';
+        prev.vx = prev.vz = prev.speed = prev.pace = prev.brake = prev.reverseWait = prev.turnSignal = 0;
+        state.vehicle = null;
+      }
+      player.root.visible = true;
+      state.landmarkGuide = null;
+      state.tapeGuide = null;
+      state.workshopGuide = false;
+      cancelStreetEvent(true);
+      state.freeYaw = 0;
+      state.throttle = false;
+      rebuildGrid(carGrid);
+      state.target = target();
+      if (!enterRestMode(spot)) return false;
+      updateCamera(0, true);
+      const amb = ambientDef(state.rest?.ambient);
+      const detail = state.rest?.ambient && state.rest.ambient !== 'off'
+        ? ('已直达落座 · 氛围音：' + amb.name)
+        : '已直达观景长椅并落座小憩';
+      announce('小憩直达', spot.name, detail, 3.6);
+      return true;
+    }
+    function stepRest(dt, keys) {
+      const rest = state.rest;
+      if (!rest?.active) return;
+      const pan = Number(keys.has('ArrowLeft')) - Number(keys.has('ArrowRight'));
+      if (pan) {
+        rest.orbitOffset = angleDiff(rest.orbitOffset + pan * dt * 1.45, 0);
+        state.lastLook = state.clock;
+      }
+      const elapsed = state.clock - rest.startedAt;
+      if (!rest.restoredBuff && elapsed >= 4.0) {
+        rest.restoredBuff = true;
+        if (state.clock - state.lastRestBuffAt >= 45) {
+          state.lastRestBuffAt = state.clock;
+          if (state.vehicle) state.vehicle.nitro = 1;
+          else {
+            for (const car of carList) {
+              if (car.type === 'parked' && distance(car, player) < 42) car.nitro = 1;
+            }
+          }
+          state.buff = {
+            id: 'serene', name: '心境澄明', icon: '☾',
+            expiresAt: state.clock + 60,
+            walkMult: 1.08, nitroRegenMult: 1.35, driftMult: 1.15, driftCashMult: 1,
+          };
+          audio.proximityPing?.();
+          announce('小憩片刻', '心境澄明', '身心舒缓，60 秒内步履轻快、氮气回充加快。', 3.2);
+        }
+      }
+      if (elapsed > .45) {
+        const moveKey = pressed(keys, 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown');
+        const stickMag = Math.hypot(keys.axisX ?? 0, keys.axisY ?? 0);
+        if (moveKey || stickMag > .35) {
+          exitRestMode(false);
+          return;
+        }
+      }
+      player.vx = player.vz = player.walking = 0;
+      state.throttle = false;
+      state.cameraBump = smooth(state.cameraBump, 0, 6, dt);
     }
     function interactStreetSpot(spot) {
       if (!spot) return false;
@@ -607,12 +1317,18 @@
         });
       } else if (spot.kind === 'culture') {
         audio.templeChime?.();
+      } else if (spot.kind === 'lantern') {
+        releaseSkyLantern(player, player.yaw);
+        audio.templeChime?.();
       } else {
         audio.streetSizzle?.();
       }
-      say(spot.speaker, spot.line, 6.2);
+      const spokenLine = spot.kind === 'lantern'
+        ? LANTERN_WISHES[(state.releasedLanternsCount - 1) % LANTERN_WISHES.length]
+        : spot.line;
+      say(spot.speaker, spokenLine, 6.2);
       const bonusNote = firstTime && spot.firstBonus ? ' · 首次奖励 +' + cashText(spot.firstBonus) : '';
-      announce(spot.kind === 'food' ? '古城烟火' : '南孔风物', spot.name, spot.toastBody + bonusNote, 4.2);
+      announce(spot.kind === 'food' ? '古城烟火' : spot.kind === 'lantern' ? '祈福放灯' : '南孔风物', spot.name, spot.toastBody + bonusNote, 4.2);
       return true;
     }
     function honkHorn() {
@@ -737,6 +1453,7 @@
       return { x: HUB.x, z: HUB.z, yaw: HUB.angle };
     }
     function summonVehicle(kind) {
+      if (state.rest?.active) exitRestMode(true);
       const car = getGarageCar(kind);
       if (!car) return false;
       applyGarageKind(kind);
@@ -891,6 +1608,7 @@
     }
     function startRingRace() {
       if (!RACE?.length) return false;
+      if (state.rest?.active) exitRestMode(true);
       if (state.mode === 'taxi') {
         taxi.end();
         state.mode = 'roam';
@@ -898,6 +1616,7 @@
       state.landmarkGuide = null;
       state.tapeGuide = null;
       state.workshopGuide = false;
+      cancelStreetEvent(true);
       if (state.boat) {
         state.boat.speed = state.boat.vx = state.boat.vz = 0;
         state.boat.throttle = state.boat.brake = false;
@@ -957,6 +1676,7 @@
     }
     function startLakeRace() {
       if (!LAKE_RACE?.length || !LAKE_RACE_START) return false;
+      if (state.rest?.active) exitRestMode(true);
       if (state.mode === 'taxi') {
         taxi.end();
         state.mode = 'roam';
@@ -964,6 +1684,7 @@
       state.landmarkGuide = null;
       state.tapeGuide = null;
       state.workshopGuide = false;
+      cancelStreetEvent(true);
       if (state.vehicle) {
         state.vehicle.type = 'parked';
         state.vehicle.vx = state.vehicle.vz = state.vehicle.speed = state.vehicle.pace = state.vehicle.brake = state.vehicle.reverseWait = state.vehicle.turnSignal = 0;
@@ -1105,6 +1826,7 @@
       return { x: near?.x ?? HUB.x, z: near?.z ?? HUB.z, yaw: baseYaw };
     }
     function fastTravelToLandmark(landmark) {
+      if (state.rest?.active) exitRestMode(true);
       if (!landmark || state.mode === 'taxi' || state.race?.active || !progress.visitedLandmarks.includes(landmark.id)) return false;
       const isIsland = landmark.kind === 'island' || landmark.id === 'yanjiayu';
       if (state.boat) {
@@ -1152,6 +1874,7 @@
       state.landmarkGuide = null;
       state.tapeGuide = null;
       state.workshopGuide = false;
+      cancelStreetEvent(true);
       state.freeYaw = state.viewPitch = 0;
       state.throttle = false;
       rebuildGrid(carGrid);
@@ -1220,6 +1943,18 @@
           };
         }
         }
+      }
+      if (state.streetEvent?.phase === 'active') {
+        return {
+          x: state.streetEvent.destX, z: state.streetEvent.destZ,
+          label: state.streetEvent.def.destName, streetEvent: true, eventKind: state.streetEvent.def.kind,
+        };
+      }
+      if (state.streetEvent?.phase === 'needCar') {
+        return {
+          x: state.streetEvent.x, z: state.streetEvent.z,
+          label: '带乘客出发 · ' + state.streetEvent.def.name, streetEvent: true, eventKind: 'ride',
+        };
       }
       if (state.workshopGuide) return WORKSHOP;
       if (state.tapeGuide) return state.tapeGuide;
@@ -1395,11 +2130,13 @@
     function switchMode(nextMode) {
       const mode = nextMode === 'taxi' ? 'taxi' : 'roam';
       if (state.mode === mode && state.active) return false;
+      if (state.rest?.active) exitRestMode(true);
       state.mode = mode;
       state.landmarkGuide = null;
       state.tapeGuide = null;
       state.race = null;
       state.workshopGuide = false;
+      cancelStreetEvent(true);
       if (mode === 'taxi') {
         if (state.boat) {
           state.boat.speed = state.boat.vx = state.boat.vz = 0;
@@ -1427,6 +2164,7 @@
     }
     function setShowroom(active, kind = null, opts = {}) {
       if (active) {
+        if (state.rest?.active) exitRestMode(true);
         if (!showroom.active) {
           showroom.savedHour = state.hour;
         }
@@ -1483,11 +2221,14 @@
       const p = protagonist();
       const ground = state.boat ? 0 : world.surfaceHeight(p.x, p.z);
       photo.targetX = p.x;
-      photo.targetY = ground + (state.vehicle ? 1.15 : state.boat ? 1.25 : 1.35);
+      photo.targetY = ground + (state.vehicle ? 1.15 : state.boat ? 1.25 : player.sitting ? .92 : 1.35);
       photo.targetZ = p.z;
-      photo.yaw = angleDiff(state.viewYaw + (state.vehicle || state.boat ? state.freeYaw : 0) + .52, 0);
+      const baseYaw = state.rest?.active
+        ? ((state.rest.spot?.yaw ?? (state.vehicle || state.boat ? (state.vehicle ?? state.boat).yaw : player.yaw)) + (state.rest.orbitOffset || 0))
+        : (state.viewYaw + (state.vehicle || state.boat ? state.freeYaw : 0));
+      photo.yaw = angleDiff(baseYaw + .52, 0);
       photo.pitch = .22;
-      photo.distance = state.vehicle ? 8.2 : state.boat ? 11.5 : 5.6;
+      photo.distance = state.vehicle ? 8.2 : state.boat ? 11.5 : player.sitting ? 4.4 : 5.6;
       photo.fov = 50;
     }
     function findPhotoFocusCar() {
@@ -1521,6 +2262,7 @@
           photo.savedWeather = state.weather;
           photo.savedRain = state.rain;
           photo.savedWetness = state.wetness;
+          photo.savedMist = state.mist;
           photo.savedFov = camera.fov;
         }
         photo.active = true;
@@ -1542,6 +2284,7 @@
       if (photo.savedWeather != null) { state.weather = photo.savedWeather; photo.savedWeather = null; }
       if (photo.savedRain != null) { state.rain = photo.savedRain; photo.savedRain = null; }
       if (photo.savedWetness != null) { state.wetness = photo.savedWetness; photo.savedWetness = null; }
+      if (photo.savedMist != null) { state.mist = photo.savedMist; photo.savedMist = null; }
       camera.fov = photo.savedFov || 57;
       camera.updateProjectionMatrix();
       updateCamera(0, true);
@@ -1569,6 +2312,7 @@
       state.weather = ((index % WEATHER.length) + WEATHER.length) % WEATHER.length;
       state.rain = WEATHER[state.weather].rain;
       state.wetness = WEATHER[state.weather].wetness;
+      state.mist = WEATHER[state.weather].mist ?? 0;
     }
     function setPhotoFilter(id) {
       photo.filter = PHOTO_FILTERS[id] ? id : 'none';
@@ -1584,6 +2328,7 @@
         return null;
       }
       camera.updateMatrixWorld();
+      const activePhotoEv = state.streetEvent?.phase === 'active' && state.streetEvent.def.kind === 'photo' ? state.streetEvent.def : null;
       let best = null;
       let bestScore = Infinity;
       for (const spot of PHOTO_SPOTS) {
@@ -1593,10 +2338,11 @@
         if (targetVector.z < 0 || targetVector.z > 1) continue;
         if (Math.abs(targetVector.x) > .80 || Math.abs(targetVector.y) > .80) continue;
         const completed = progress.photos.includes(spot.id);
-        const centrality = Math.hypot(targetVector.x, targetVector.y) + (completed ? 1.5 : 0);
+        const isEventTarget = Boolean(activePhotoEv && spot.id === activePhotoEv.photoSpotId);
+        const centrality = Math.hypot(targetVector.x, targetVector.y) + (isEventTarget ? -1.2 : completed ? 1.5 : 0);
         if (centrality < bestScore) {
           bestScore = centrality;
-          best = { spot, completed, distance: Math.round(d) };
+          best = { spot, completed, distance: Math.round(d), eventMatch: isEventTarget ? activePhotoEv : null };
         }
       }
       photo.subject = best;
@@ -1673,8 +2419,13 @@
         }
         checkPhotoSubject();
       }
+      let eventCompleted = null;
+      if (dataUrl && framed?.eventMatch && state.streetEvent?.phase === 'active' && state.streetEvent.def.id === framed.eventMatch.id) {
+        eventCompleted = completeStreetEvent(state.streetEvent, 0, '');
+        checkPhotoSubject();
+      }
       return {
-        dataUrl, framed: photo.subject, newlyCompleted, reward,
+        dataUrl, framed: photo.subject, newlyCompleted, reward, eventCompleted,
         count: progress.photos.length, total: PHOTO_SPOTS?.length ?? 5,
         filter: filterObj.id, postcard: withPostcard,
       };
@@ -1683,6 +2434,7 @@
       return capturePhotoResult()?.dataUrl ?? null;
     }
     function positionAtGarage() {
+      if (state.rest?.active) exitRestMode(true);
       const original = garages[0];
       if (state.vehicle) tryExit(state.vehicle);
       if (state.vehicle) state.vehicle.type = 'parked';
@@ -1715,6 +2467,7 @@
       updateCamera(0, true);
     }
     function resetPosition() {
+      if (state.rest?.active) exitRestMode(true);
       state.race = null;
       if (state.mode === 'taxi') {
         if (state.vehicle) {
@@ -1746,10 +2499,23 @@
       state.playingTape = null;
       audio.stopTape?.();
       state.lastBellHour = -1;
+      state.chatter = null;
+      state.nextChatter = 4.5;
+      state.streetEvent = null;
+      clearEventVisuals();
+      state.nextEventAt = 16;
+      state.rest = null;
+      state.lastRestBuffAt = -100;
+      player.sitting = false;
+      player.sitBlend = 0;
+      player.sitHeight = 0;
+      player.sitHasBack = false;
+      while (releasedLanterns.length) scene.remove(releasedLanterns.pop().group);
       state.hour = 10.4;
       state.weather = 0;
       state.wetness = WEATHER[0].wetness;
       state.rain = WEATHER[0].rain;
+      state.mist = WEATHER[0].mist;
       state.active = true;
       audio.start();
       rainSound.start();
@@ -1892,6 +2658,9 @@
       factory.particlesAt(contact.x, .57, contact.z, 'spark', Math.min(14, Math.floor(relative * .6)));
       audio.nudge();
       if (car === state.vehicle && taxi.isTaxiCar(car)) taxi.notifyImpact(relative);
+      if (car === state.vehicle && state.streetEvent?.phase === 'active' && state.streetEvent.def.kind === 'ride' && relative > 5.5) {
+        state.streetEvent.roughHits++;
+      }
     }
     function moveDriven(car, dt) {
       const nextX = car.x + car.vx * dt;
@@ -2267,7 +3036,8 @@
       if (distance(ped, target) < 1.9) ped.index = (ped.index + 1) % ped.loop.length;
       const angle = threat ? heading(state.vehicle, ped) : escaping ? ped.escapeYaw : heading(ped, target);
       ped.yaw += angleDiff(angle, ped.yaw) * (1 - Math.exp(-9 * dt));
-      const pace = threat || escaping ? 4.9 : ped.walk;
+      const rainHurry = state.rain > .38 ? 1 + clamp((state.rain - .38) * .42, 0, .24) : 1;
+      const pace = threat || escaping ? 4.9 : ped.walk * rainHurry;
       const next = offset(ped, ped.yaw, pace * dt);
       if (clearForPerson(next.x, next.z)) {
         ped.x = next.x;
@@ -2284,14 +3054,62 @@
       }
       ped.fleeing = Boolean(threat || escaping);
     }
+    function pickChatterLine(zoneHint, x, z) {
+      const rain = state.rain > .45;
+      const night = state.night > .32;
+      const mist = state.mist > .45;
+      let pool;
+      if (zoneHint === 'market') pool = rain ? CHATTER_LINES.marketRain : night ? CHATTER_LINES.marketNight : CHATTER_LINES.marketDay;
+      else if (zoneHint === 'kongmiao' || (x > 130 && x < 196 && z > -55 && z < 14)) pool = CHATTER_LINES.kongmiao;
+      else if (x > 108 && x < 254 && z > 8 && z < 170) pool = night ? CHATTER_LINES.nightStreet : CHATTER_LINES.fushanDay;
+      else if (zoneHint === 'lake' || x > 304 || (z > 125 && z < 238 && x > -205 && x < 140)) pool = mist ? CHATTER_LINES.lakeMist : night ? CHATTER_LINES.lakeNight : CHATTER_LINES.lakeDay;
+      else if (x < -82 && z > -135 && z < 65) pool = rain ? CHATTER_LINES.rainStreet : mist ? CHATTER_LINES.shuitingMist : night ? CHATTER_LINES.shuitingNight : CHATTER_LINES.shuitingDay;
+      else if (rain) pool = CHATTER_LINES.rainStreet;
+      else if (night) pool = CHATTER_LINES.nightStreet;
+      else pool = CHATTER_LINES.dayStreet;
+      const filtered = pool.length > 1 ? pool.filter(line => line !== state.lastChatterLine) : pool;
+      return filtered[Math.floor(random() * filtered.length)] || pool[0];
+    }
+    function stepStreetChatter(p) {
+      if (state.chatter && state.clock >= state.chatter.until) state.chatter = null;
+      if (state.chatter || state.mode !== 'roam' || state.race?.active || showroom.active || photo.active) return;
+      if (state.streetEvent && (state.streetEvent.phase === 'offered' || state.streetEvent.phase === 'needCar') && distance(p, state.streetEvent) < 22) return;
+      if (state.clock < state.nextChatter) return;
+      const speed = Math.abs((state.boat ?? state.vehicle)?.speed ?? 0);
+      if (speed > 7.2 || state.boat) return;
+      let anchor = null;
+      let bestDist = 17.5;
+      for (const stall of CHATTER_STALLS) {
+        const d = distance(p, stall);
+        if (d < bestDist && d > 2.2) { bestDist = d; anchor = { who: stall.who, zone: stall.zone, x: stall.x, y: stall.y, z: stall.z, ped: null }; }
+      }
+      if (!anchor) {
+        let nearPed = null;
+        let pedDist = 18.5;
+        queryPeds(p.x, p.z, 19, ped => {
+          if (ped.streetReaction || ped.fleeing || !ped.root.visible) return;
+          const d = distance(p, ped);
+          if (d > 3.2 && d < pedDist) { pedDist = d; nearPed = ped; }
+        });
+        if (nearPed) {
+          anchor = { who: state.rain > .45 ? '避雨路人' : state.night > .35 ? '夜游行人' : '古城行人', zone: null, x: nearPed.x, y: 2.15, z: nearPed.z, ped: nearPed };
+        }
+      }
+      if (!anchor) { state.nextChatter = state.clock + 2.5; return; }
+      const text = pickChatterLine(anchor.zone, anchor.x, anchor.z);
+      state.lastChatterLine = text;
+      state.chatter = { who: anchor.who, text, ped: anchor.ped, x: anchor.x, y: anchor.y, z: anchor.z, startedAt: state.clock, until: state.clock + 4.4 };
+      state.nextChatter = state.clock + 7.2 + random() * 4.4;
+    }
     let simTick = 0;
     function step(dt, keys) {
       simTick++;
       state.clock += dt;
       const prevHour = state.hour;
-      state.hour = (state.hour + dt * .008) % 24;
+      const timeScale = state.rest?.active ? (state.rest.timeScale || 1) : 1;
+      state.hour = (state.hour + dt * .008 * timeScale) % 24;
       const curMark = Math.floor(state.hour);
-      if (state.mode === 'roam' && !state.race?.active && Math.floor(prevHour) !== curMark && BELL_HOURS[curMark] && state.lastBellHour !== curMark) {
+      if (timeScale <= 1 && state.mode === 'roam' && !state.race?.active && Math.floor(prevHour) !== curMark && BELL_HOURS[curMark] && state.lastBellHour !== curMark) {
         state.lastBellHour = curMark;
         audio.bellChime?.(curMark === 12 ? 3 : 2);
         say('衢州钟楼报时', BELL_HOURS[curMark], 6.4);
@@ -2300,6 +3118,13 @@
       state.rain = smooth(state.rain, conditions.rain, .77, dt);
       state.wetness = smooth(state.wetness, conditions.wetness, .24, dt);
       const p = protagonist();
+      const dawnHaze = state.hour >= 5.0 && state.hour <= 7.8
+        ? Math.sin(clamp((state.hour - 5.0) / 2.8, 0, 1) * Math.PI) * .22
+        : 0;
+      const lakeMist = (p.x > 305 || (p.z > 125 && p.z < 240 && p.x > -205 && p.x < 140)) ? .10 : 0;
+      const baseMist = conditions.mist ?? 0;
+      const targetMist = clamp(baseMist + (baseMist > 0 ? lakeMist * .5 : dawnHaze * (1 + lakeMist * 2)), 0, 1);
+      state.mist = smooth(state.mist, targetMist, .42, dt);
       rebuildGrid(carGrid);
       rebuildGrid(pedGrid);
       for (let i = 0; i < carList.length; i++) {
@@ -2313,7 +3138,8 @@
           else stepTraffic(car, stepDt);
         }
       }
-      if (state.vehicle) drive(dt, keys);
+      if (state.rest?.active) stepRest(dt, keys);
+      else if (state.vehicle) drive(dt, keys);
       else if (state.boat) {
         if (marine.pilot(state.boat, dt, keys)) {
           state.shake = .43;
@@ -2340,6 +3166,9 @@
         else stepPerson(ped, stepDt);
       }
       checkExploration();
+      stepStreetEvent(dt);
+      stepReleasedLanterns(dt);
+      stepStreetChatter(p);
       const actor = protagonist();
       state.sheltered = world.shelters.some(area => actor.x >= area.minX && actor.x <= area.maxX &&
         actor.z >= area.minZ && actor.z <= area.maxZ);
@@ -2349,6 +3178,7 @@
 
     let alternateView = 0, hoodView = 0;
     let fromAlternate = 0, fromHood = 0;
+    let restCamBlend = 0;
     let previousCameraMode = -1, blendTime = 1, blendDuration = .32;
     let cameraReach = 1, cameraGround = 0, orbitSubject = null;
     const mountEye = new T.Vector3(), mountAim = new T.Vector3(), mountOffset = new T.Vector3();
@@ -2373,9 +3203,11 @@
       const blend = blendTime * blendTime * (3 - 2 * blendTime);
       alternateView = mix(fromAlternate, Number(mode === 1), blend);
       hoodView = mix(fromHood, Number(mode === 2), blend);
+      const restActive = Boolean(state.rest?.active);
+      restCamBlend = snap || progress.reduceMotion ? Number(restActive) : smooth(restCamBlend, Number(restActive), 4.2, dt);
       const ground = boat ? 0 : world.surfaceHeight(p.x, p.z) - .023;
       cameraGround = snap ? ground : smooth(cameraGround, ground, 15, dt);
-      if (driving) {
+      if (driving && !restActive) {
         const moving = Math.abs(driving.speed) > 1.35;
         const looking = state.lookHeld || (orbitSubject === driving && (!moving || state.clock - state.lastLook < 1.1));
         if (snap) state.viewYaw = driving.yaw;
@@ -2394,7 +3226,14 @@
           state.freeYaw = smooth(state.freeYaw, clamp(state.freeYaw, -1.52, 1.52), 9, dt);
         }
       }
-      const yaw = state.viewYaw + (driving ? state.freeYaw : 0);
+      let yaw = state.viewYaw + (driving ? state.freeYaw : 0);
+      if (restActive) {
+        const swayAge = state.clock - state.lastLook;
+        const swayFactor = swayAge > 4.2 && !progress.reduceMotion ? clamp((swayAge - 4.2) / 2.2, 0, 1) : 0;
+        const sway = Math.sin((state.clock - state.rest.startedAt) * .22) * .22 * swayFactor;
+        const baseYaw = state.rest.spot ? state.rest.spot.yaw : (driving ? driving.yaw : player.yaw);
+        yaw = baseYaw + (state.rest.orbitOffset || 0) + sway;
+      }
       const fx = Math.sin(yaw), fz = Math.cos(yaw);
       const speed = clamp(Math.abs(driving?.speed ?? 0) / (boat ? 23 : 40), 0, 1);
       let back, height, side = 0, lead, aimHeight, fov;
@@ -2425,6 +3264,22 @@
         lead = mix(4.1, 4.7, alternateView);
         aimHeight = 1.74;
         fov = mix(state.sheltered ? 65 : 57, state.sheltered ? 59 : 55, alternateView);
+      }
+      if (restCamBlend > .003) {
+        const rBack = boat ? 10.6 : car ? 7.4 : 4.25;
+        const rHeight = boat ? 3.45 : car ? 2.38 : 1.72;
+        const rSide = boat ? .85 : car ? .65 : .74;
+        const rLead = boat ? 6.2 : car ? 4.5 : 6.6;
+        const rAim = boat ? 1.35 : car ? 1.24 : 1.32;
+        const rFov = car ? 49 : 52;
+        back = mix(back, rBack, restCamBlend);
+        height = mix(height, rHeight, restCamBlend);
+        side = mix(side, rSide, restCamBlend);
+        lead = mix(lead, rLead, restCamBlend);
+        aimHeight = mix(aimHeight, rAim, restCamBlend);
+        fov = mix(fov, rFov, restCamBlend);
+        nose = mix(nose, 0, restCamBlend);
+        pitchArm = mix(pitchArm, 1, restCamBlend);
       }
       const pivotHeight = boat ? 1.46 : 1.25;
       cameraPivot.set(p.x, ground + pivotHeight, p.z);
@@ -2459,7 +3314,11 @@
       // Blend the boom in subject space. An orbit responds on the next frame, and
       // one swept segment protects the complete rendered boom at every angle.
       const padding = clamp(.12 + camera.near * Math.hypot(1, camera.aspect) * Math.tan(camera.fov * Math.PI / 360), .27, .40);
-      const hit = world.clearFraction(p.x, cameraPivot.y, p.z, desired.x, desired.y, desired.z, padding);
+      const benchRest = state.rest?.kind === 'bench' && state.rest.spot;
+      const rayX = benchRest ? state.rest.spot.exitX : p.x;
+      const rayY = benchRest ? (cameraGround + 1.56) : cameraPivot.y;
+      const rayZ = benchRest ? state.rest.spot.exitZ : p.z;
+      const hit = world.clearFraction(rayX, rayY, rayZ, desired.x, desired.y, desired.z, padding);
       const reach = hit < 1 ? Math.max(0, hit - .006) : 1;
       cameraReach = snap || reach <= cameraReach ? reach : smooth(cameraReach, reach, 12, dt);
       camera.position.copy(cameraPivot).lerp(desired, cameraReach);
@@ -2492,12 +3351,18 @@
       for (const b of landmarkBeacons) b.group.visible = false;
       for (const item of tapeProps) item.group.visible = false;
       for (const item of streetSpotProps) item.group.visible = false;
+      for (const item of restSpotProps) item.group.visible = false;
+      eventBeacon.group.visible = false;
       raceActiveGate.group.visible = false;
       racePreviewGate.group.visible = false;
       raceStartGate.group.visible = false;
       lakeStartGate.group.visible = false;
     }
     function drawMarkers() {
+      if (state.rest?.active) {
+        hideWorldMarkers();
+        return;
+      }
       const p = protagonist();
       const aim = state.target;
       roadNavigation.update(state.vehicle, aim, state.clock);
@@ -2509,7 +3374,7 @@
         marker.scale.setScalar(gap < 8 ? .63 : 1);
         markerDisk.visible = gap < 55 && !aim.vehiclePickup;
         diamond.visible = gap > 7;
-        markerCore.color.copy(aim.taxi ? taxiAmber : aim.tape ? tapeRose : aim.workshop ? workshopMint : aim.marine ? seaBlue : gold);
+        markerCore.color.copy(aim.taxi ? taxiAmber : aim.streetEvent ? eventCoral : aim.tape ? tapeRose : aim.workshop ? workshopMint : aim.marine ? seaBlue : gold);
         markerHaze.color.copy(markerCore.color);
         diamond.position.y = 2.8 + (progress.reduceMotion ? 0 : .07 * Math.sin(state.clock * 2));
         diamond.scale.setScalar(clamp(gap * .035, .88, 2.5));
@@ -2569,6 +3434,38 @@
           item.gem.rotation.y = state.clock * 1.4 + item.index;
         }
       }
+      const showRestSpots = !state.vehicle && !state.boat && !state.race?.active && !showroom.active && !photo.active;
+      for (const item of restSpotProps) {
+        if (!showRestSpots) { item.group.visible = false; continue; }
+        const d = distance(p, item.spot);
+        if (d > 28) { item.group.visible = false; continue; }
+        item.group.visible = true;
+        const pulse = progress.reduceMotion ? 1 : (.82 + .18 * Math.sin(state.clock * 2.0 + item.index));
+        item.ringMat.opacity = .26 * pulse * clamp((28 - d) / 8, 0, 1);
+      }
+      const curEv = state.streetEvent;
+      const showEvBeacon = Boolean(curEv && (curEv.phase === 'offered' || curEv.phase === 'needCar') && state.mode === 'roam' && !state.race?.active && !showroom.active && !photo.active);
+      if (showEvBeacon) {
+        const d = distance(p, curEv);
+        eventBeacon.group.visible = d < 185;
+        if (eventBeacon.group.visible) {
+          eventBeacon.group.position.set(curEv.x, world.surfaceHeight(curEv.x, curEv.z), curEv.z);
+          const pulse = .5 + .5 * Math.sin(state.clock * 4.2);
+          const fade = clamp((185 - d) / 28, 0, 1);
+          eventBeacon.ring.scale.setScalar(.92 + .18 * pulse);
+          eventBeacon.ringMat.opacity = (.48 + .32 * pulse) * fade;
+          eventBeacon.fillMat.opacity = (.10 + .08 * pulse) * fade;
+          eventBeacon.gem.visible = d > 2.2;
+          eventBeacon.beam.visible = d > 10;
+          eventBeacon.beamMat.opacity = .18 * clamp((d - 10) / 20, 0, 1) * fade;
+          if (!progress.reduceMotion) {
+            eventBeacon.gem.position.y = 2.68 + .16 * Math.sin(state.clock * 3.0);
+            eventBeacon.gem.rotation.y = state.clock * 2.1;
+          }
+        }
+      } else {
+        eventBeacon.group.visible = false;
+      }
       if (state.race?.active) {
         raceStartGate.group.visible = false;
         lakeStartGate.group.visible = false;
@@ -2625,7 +3522,7 @@
       }
       world.updateVisibleStreet(camera);
       state.night = world.light(state.hour, state.clock, camera, state.wetness, state.rain,
-        { center: view, vehicle: state.vehicle, shadowSize: profile.shadows, extraLights: mode === 'ultra' || mode === 'high' });
+        { center: view, vehicle: state.vehicle, shadowSize: profile.shadows, extraLights: mode === 'ultra' || mode === 'high', mist: state.mist });
       factory.lighting(state.night);
       traffic?.updateSignals(state.clock, state.night);
       const eye = camera.position;
@@ -2644,18 +3541,27 @@
         if (car.root.visible) factory.poseCar(car, dt, state.night, state.clock);
       }
       const pedRangeSq = profile.people * profile.people;
+      pedEnv.rain = state.rain;
+      pedEnv.night = state.night;
+      pedEnv.clock = state.clock;
+      pedEnv.sheltered = state.sheltered;
       for (let i = 0; i < pedestrians.length; i++) {
         const ped = pedestrians[i];
         const dx = ped.x - view.x, dz = ped.z - view.z;
         ped.root.visible = (dx * dx + dz * dz < pedRangeSq);
         ped.root.matrixWorldAutoUpdate = ped.root.visible;
-        if (ped.root.visible) factory.posePerson(ped, dt, ped.visiblePace ?? ped.walk, ped.fleeing, false, eye);
+        if (ped.root.visible) factory.posePerson(ped, dt, ped.visiblePace ?? ped.walk, ped.fleeing, false, eye, pedEnv);
       }
+      const activeEv = state.streetEvent;
+      const showEvNpc = Boolean(activeEv && (activeEv.phase === 'offered' || activeEv.phase === 'needCar' || activeEv.phase === 'farewell' || (activeEv.phase === 'active' && activeEv.def.kind !== 'ride')));
+      eventNpc.root.visible = showEvNpc && (eventNpc.x - view.x) ** 2 + (eventNpc.z - view.z) ** 2 < pedRangeSq;
+      eventNpc.root.matrixWorldAutoUpdate = eventNpc.root.visible;
+      if (eventNpc.root.visible) factory.posePerson(eventNpc, dt, 0, false, false, eye, pedEnv);
       if (state.vehicle?.concept) D.poseConceptDriver(player, state.vehicle);
       else if (player.root.parent !== scene) D.leaveConceptSeat(player, scene);
       if (!state.vehicle && !state.boat) {
         player.root.visible = !cameraInsideActor;
-        factory.posePerson(player, dt, player.walking ?? 0, false, false);
+        factory.posePerson(player, dt, player.walking ?? 0, false, false, null, pedEnv);
       }
       marine.render(dt, state, false, true);
       drawMarkers();
@@ -2692,7 +3598,7 @@
       world.updateVisibleStreet(camera);
       const showHour = showroom.night ? 22.1 : 10.6;
       state.night = world.light(showHour, state.clock, camera, showroom.night ? .52 : .06, 0,
-        { center: car, vehicle: car, shadowSize: profile.shadows, extraLights: true });
+        { center: car, vehicle: car, shadowSize: profile.shadows, extraLights: true, mist: 0 });
       factory.lighting(state.night);
       traffic?.updateSignals(state.clock, state.night);
       hideWorldMarkers();
@@ -2710,7 +3616,7 @@
       factory.updateParticles(dt);
       renderer.shadowMap.needsUpdate = world.sun.castShadow && world.sun.shadow.needsUpdate;
       prepareReflections(camera, state, 'road', true);
-      renderScene(camera, state);
+      renderScene(camera, { ...state, rain: 0, wetness: showroom.night ? .52 : .06, mist: 0 });
     }
     function renderPhoto(dt, keys) {
       const view = protagonist();
@@ -2761,7 +3667,7 @@
       checkPhotoSubject();
       world.updateVisibleStreet(camera);
       state.night = world.light(state.hour, state.clock, camera, state.wetness, state.rain,
-        { center: { x: photo.targetX, z: photo.targetZ }, vehicle: state.vehicle || photo.focusCar, shadowSize: profile.shadows, extraLights: mode === 'ultra' || mode === 'high' });
+        { center: { x: photo.targetX, z: photo.targetZ }, vehicle: state.vehicle || photo.focusCar, shadowSize: profile.shadows, extraLights: mode === 'ultra' || mode === 'high', mist: state.mist });
       factory.lighting(state.night);
       traffic?.updateSignals(state.clock, state.night);
       hideWorldMarkers();
@@ -2774,17 +3680,27 @@
         if (car.root.visible) factory.poseCar(car, 0, state.night, state.clock);
       }
       const pedRangeSq = profile.people * profile.people;
+      pedEnv.rain = state.rain;
+      pedEnv.night = state.night;
+      pedEnv.clock = state.clock;
+      pedEnv.sheltered = state.sheltered;
       for (let i = 0; i < pedestrians.length; i++) {
         const ped = pedestrians[i];
         const dx = ped.x - photo.targetX, dz = ped.z - photo.targetZ;
         ped.root.visible = (dx * dx + dz * dz < pedRangeSq);
         ped.root.matrixWorldAutoUpdate = ped.root.visible;
+        if (ped.root.visible) factory.posePerson(ped, 0, ped.visiblePace ?? ped.walk, ped.fleeing, false, camera.position, pedEnv);
       }
+      const photoEv = state.streetEvent;
+      const showPhotoEvNpc = Boolean(photoEv && (photoEv.phase === 'offered' || photoEv.phase === 'needCar' || photoEv.phase === 'farewell' || (photoEv.phase === 'active' && photoEv.def.kind !== 'ride')));
+      eventNpc.root.visible = showPhotoEvNpc && (eventNpc.x - photo.targetX) ** 2 + (eventNpc.z - photo.targetZ) ** 2 < pedRangeSq;
+      eventNpc.root.matrixWorldAutoUpdate = eventNpc.root.visible;
+      if (eventNpc.root.visible) factory.posePerson(eventNpc, 0, 0, false, false, camera.position, pedEnv);
       if (state.vehicle?.concept) D.poseConceptDriver(player, state.vehicle);
       else if (player.root.parent !== scene) D.leaveConceptSeat(player, scene);
       if (!state.vehicle && !state.boat) {
         player.root.visible = true;
-        factory.posePerson(player, 0, player.walking ?? 0, false, false);
+        factory.posePerson(player, 0, player.walking ?? 0, false, false, null, pedEnv);
       }
       marine.render(0, state, false, true);
       renderer.shadowMap.needsUpdate = world.sun.castShadow && world.sun.shadow.needsUpdate;
@@ -3025,19 +3941,40 @@
         updateCamera(span);
         render(span);
       }
-      audio.tick({ paused: !running, car: state.vehicle ?? state.boat, throttle: state.throttle, clock: state.clock });
+      audio.tick({ paused: !running, car: state.vehicle ?? state.boat, throttle: state.throttle, clock: state.clock, rain: state.rain, engineOff: Boolean(state.rest?.active) });
       rainSound.tick(state, running, progress.sound, state.sheltered);
     }
     function projectTarget() {
+      if (state.rest?.active) return null;
       const aim = state.target;
       if (!aim) return null;
       const d = distance(aim, protagonist());
       if (d <= 6 || d > (aim.marine || aim.race ? 260 : 173)) return null;
       targetVector.set(aim.x, aim.water ? 3.5 : aim.race ? 7.2 : 3.7, aim.z).project(camera);
       if (targetVector.z < 0 || targetVector.z > 1 || Math.abs(targetVector.x) > .91 || Math.abs(targetVector.y) > .78) return null;
-      return { x: (targetVector.x + 1) / 2, y: (1 - targetVector.y) / 2, d, label: aim.label, taxi: aim.taxi, workshop: aim.workshop, marine: aim.marine, race: aim.race, tape: aim.tape };
+      return { x: (targetVector.x + 1) / 2, y: (1 - targetVector.y) / 2, d, label: aim.label, taxi: aim.taxi, workshop: aim.workshop, marine: aim.marine, race: aim.race, tape: aim.tape, streetEvent: aim.streetEvent };
+    }
+    function projectChatter() {
+      const c = state.chatter;
+      if (!c || state.clock >= c.until || showroom.active || photo.active || state.race?.active || state.rest?.active) return null;
+      const ax = c.ped ? c.ped.x : c.x;
+      const az = c.ped ? c.ped.z : c.z;
+      const ay = c.ped ? (world.surfaceHeight(ax, az) + 2.28) : c.y;
+      const d = distance({ x: ax, z: az }, protagonist());
+      if (d > 26) return null;
+      chatterVector.set(ax, ay, az).project(camera);
+      if (chatterVector.z < 0 || chatterVector.z > 1 || Math.abs(chatterVector.x) > .84 || Math.abs(chatterVector.y) > .76) return null;
+      const fadeIn = clamp((state.clock - c.startedAt) / .35, 0, 1);
+      const fadeOut = clamp((c.until - state.clock) / .65, 0, 1);
+      return { x: (chatterVector.x + 1) / 2, y: (1 - chatterVector.y) / 2, who: c.who, text: c.text, alpha: Math.min(fadeIn, fadeOut) };
     }
     function turnCamera(delta, pitch = 0, orbit = false) {
+      if (state.rest?.active) {
+        state.rest.orbitOffset = angleDiff((state.rest.orbitOffset || 0) + delta, 0);
+        state.viewPitch = clamp(state.viewPitch + pitch, -.45, .52);
+        state.lastLook = state.clock;
+        return;
+      }
       if (state.vehicle || state.boat) {
         if (delta || pitch) orbitSubject = state.vehicle ?? state.boat;
         const yaw = state.freeYaw + delta;
@@ -3062,28 +3999,31 @@
     }
     function switchTime() {
       let periodLabel;
-      if (state.hour >= 7 && state.hour < 15.8) {
-        state.hour = 16.85;
+      if (state.hour >= 5.2 && state.hour < 8.4) {
+        state.hour = 10.4;
+        periodLabel = '晴空白昼';
+      } else if (state.hour >= 8.4 && state.hour < 15.6) {
+        state.hour = 17.45;
         periodLabel = '黄昏暮色';
-      } else if (state.hour >= 15.8 && state.hour < 19.5) {
+      } else if (state.hour >= 15.6 && state.hour < 19.5) {
         state.hour = 21.6;
         periodLabel = '古城夜色';
       } else {
-        state.hour = 10.4;
-        periodLabel = '晴空白昼';
+        state.hour = 6.45;
+        periodLabel = '晨曦微露';
       }
-      announce('时段切换', periodLabel, '白昼 / 暮色 / 夜幕循环切换（快捷键 N）', 2.4);
+      announce('时段切换', periodLabel, '晨曦 / 白昼 / 暮色 / 夜幕循环切换（快捷键 N）', 2.4);
       audio.note();
     }
     function switchWeather() {
       state.weather = (state.weather + 1) % WEATHER.length;
       const current = WEATHER[state.weather];
-      announce('天气切换', current.name, '晴朗 / 雨后 / 阵雨循环切换（快捷键 X）', 2.4);
+      announce('天气切换', current.name, '晴朗 / 晨雾 / 雨后 / 阵雨循环切换（快捷键 X）', 2.4);
       audio.note();
     }
     resize();
     return { state, world, cars: carList, pedestrians, traffic, boats: marine.fleet, taxi, resize, repaint, recoverGraphics, update, start, switchMode, context, handleInteraction, resetPosition,
-      protagonist, projectTarget, turnCamera, holdCamera, switchTime, toggleStation,
+      protagonist, projectTarget, projectChatter, turnCamera, holdCamera, switchTime, toggleStation,
       roadGuide: roadNavigation.current,
       switchWeather,
       setSound: audio.setEnabled, cycleCamera,
@@ -3093,7 +4033,10 @@
       navigateWorkshop, getGarageCar, applyGarageKind, buyUpgrade, selectVisual, summonVehicle, quickSummonVehicle,
       setShowroom, orbitShowroom, zoomShowroom, setShowroomNight, showroom,
       setPhotoMode, orbitPhoto, zoomPhoto, setPhotoFov, setPhotoHour, setPhotoWeather, setPhotoFilter, setPhotoPostcard, setPhotoCarLights, checkPhotoSubject, resetPhotoCamera, capturePhoto, capturePhotoResult, photo, PHOTO_FILTERS,
-      honkHorn, toggleVehicleLights, interactStreetSpot, activeBuff, STREET_SPOTS,
+      honkHorn, toggleVehicleLights, interactStreetSpot, releaseSkyLantern, releasedLanterns, activeBuff, STREET_SPOTS,
+      REST_SPOTS, REST_AMBIENTS, enterRestMode, exitRestMode, toggleRestMode, setRestTimeScale, cycleRestTimeScale, toggleRestUi,
+      setRestAmbient, cycleRestAmbient, ambientStatus, fastTravelToRestSpot, setRestSpotTarget,
+      STREET_EVENTS, spawnStreetEvent, cancelStreetEvent, eventNpc, eventBeacon,
       cashText };
   }
 

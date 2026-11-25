@@ -6,7 +6,7 @@
   const prompts = {
     enter: '上车', exit: '下车', boardBoat: '上船', leaveBoat: '下船', workshop: '改装工坊',
     taxiBoard: '接客', taxiDrop: '送达', taxiNext: '接单',
-    streetSpot: '体验', raceStart: '计时赛', lakeRaceStart: '水上赛',
+    streetSpot: '体验', restSpot: '小憩', eventAccept: '奇遇', raceStart: '计时赛', lakeRaceStart: '水上赛',
   };
 
   function inputPoint(root, event) {
@@ -198,6 +198,7 @@
     const reverseHint = find('reverse-hint');
     const interact = find('enter');
     const summon = find('summon');
+    const restBtn = find('rest');
     const horn = find('horn');
     const lights = find('lights');
     const labelFor = button => button.querySelector('[data-touch-label]') || button;
@@ -452,6 +453,10 @@
         const lm = state.vehicle?.manualLights || 'auto';
         lights.setAttribute('aria-pressed', String(lm === 'on'));
         lights.classList.toggle('is-off', lm === 'off');
+      }
+      if (restBtn) {
+        const movingFast = Boolean((state.vehicle && Math.abs(state.vehicle.speed) > 1.8) || (state.boat && Math.abs(state.boat.speed) > 1.8));
+        restBtn.hidden = Boolean(state.rest?.active || state.race?.active || movingFast);
       }
       const short = context && (context.shortLabel || prompts[context.kind]);
       interact.hidden = !short;
