@@ -1,0 +1,1453 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-25T02:28:36Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 5406901941,
+  "lat": 28.9651377,
+  "lon": 118.8665121,
+  "tags": {
+    "name": "府山街道办事处",
+    "office": "government"
+  }
+},
+{
+  "type": "node",
+  "id": 5406901943,
+  "lat": 28.9610821,
+  "lon": 118.8665563,
+  "tags": {
+    "capital": "8",
+    "name": "府山街道",
+    "name:en": "Fushan",
+    "name:zh": "府山街道",
+    "name:zh-Hans": "府山街道",
+    "name:zh-Hant": "府山街道",
+    "name:zh-Latn-pinyin": "Fǔshān Jiēdào",
+    "place": "suburb",
+    "place:CN": "subdistrict",
+    "wikidata": "Q11063316",
+    "wikipedia": "zh:府山街道 (衢州市)"
+  }
+},
+{
+  "type": "way",
+  "id": 52096893,
+  "center": {
+    "lat": 28.8184190,
+    "lon": 118.7365339
+  },
+  "tags": {
+    "boat": "no",
+    "code": "AGA12006",
+    "name": "江山港",
+    "name:en": "Jiangshan River",
+    "name:zh-Latn-pinyin": "jiāngshān găng",
+    "nsdi_code": "GA1005",
+    "source": "Yahoo",
+    "waterway": "river",
+    "zhb_code": "12GA050800"
+  }
+},
+{
+  "type": "way",
+  "id": 52096955,
+  "center": {
+    "lat": 28.9679279,
+    "lon": 118.8874426
+  },
+  "tags": {
+    "boat": "no",
+    "loc_name": "衢江",
+    "name": "衢江",
+    "name:en": "Qu River",
+    "ship": "yes",
+    "waterway": "river"
+  }
+},
+{
+  "type": "way",
+  "id": 152353828,
+  "center": {
+    "lat": 29.0252743,
+    "lon": 118.8100809
+  },
+  "tags": {
+    "boat": "no",
+    "name": "大头源/石梁溪",
+    "source": "landsat",
+    "waterway": "river",
+    "width": "30"
+  }
+},
+{
+  "type": "way",
+  "id": 205900400,
+  "center": {
+    "lat": 28.9477378,
+    "lon": 118.8554283
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江南路"
+  }
+},
+{
+  "type": "way",
+  "id": 205944061,
+  "center": {
+    "lat": 28.9564494,
+    "lon": 118.8547318
+  },
+  "tags": {
+    "bridge": "yes",
+    "highway": "secondary",
+    "layer": "1",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 205948471,
+  "center": {
+    "lat": 28.9563209,
+    "lon": 118.8546792
+  },
+  "tags": {
+    "bridge": "yes",
+    "highway": "secondary",
+    "layer": "1",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 242583683,
+  "center": {
+    "lat": 28.9346571,
+    "lon": 118.7378561
+  },
+  "tags": {
+    "code": "AGA02006",
+    "name": "常山江",
+    "name:en": "Chanshan River",
+    "name:zh-Latn-pinyin": "Chángshān Jiāng",
+    "source": "bing",
+    "waterway": "river",
+    "zhb_code": "12GA010000"
+  }
+},
+{
+  "type": "way",
+  "id": 250932179,
+  "center": {
+    "lat": 28.9653243,
+    "lon": 118.8678194
+  },
+  "tags": {
+    "highway": "path",
+    "name": "钟楼底"
+  }
+},
+{
+  "type": "way",
+  "id": 298959855,
+  "center": {
+    "lat": 28.9801631,
+    "lon": 118.8740805
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江北路"
+  }
+},
+{
+  "type": "way",
+  "id": 306688819,
+  "center": {
+    "lat": 28.9729887,
+    "lon": 118.8625765
+  },
+  "tags": {
+    "bridge": "yes",
+    "highway": "primary",
+    "layer": "1",
+    "name": "西安门大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 311766745,
+  "center": {
+    "lat": 28.9544835,
+    "lon": 118.8512850
+  },
+  "tags": {
+    "waterway": "river"
+  }
+},
+{
+  "type": "way",
+  "id": 311769161,
+  "center": {
+    "lat": 28.9693728,
+    "lon": 118.8632809
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "name": "衢江中路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 311852613,
+  "center": {
+    "lat": 28.9651531,
+    "lon": 118.8711869
+  },
+  "tags": {
+    "highway": "residential",
+    "name": "迎和中路"
+  }
+},
+{
+  "type": "way",
+  "id": 311852886,
+  "center": {
+    "lat": 28.9555150,
+    "lon": 118.8626733
+  },
+  "tags": {
+    "highway": "tertiary",
+    "name": "礼贤街",
+    "oneway": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 311853266,
+  "center": {
+    "lat": 28.9573196,
+    "lon": 118.8656934
+  },
+  "tags": {
+    "name": "南湖",
+    "natural": "water",
+    "water": "lake"
+  }
+},
+{
+  "type": "way",
+  "id": 311853267,
+  "center": {
+    "lat": 28.9601987,
+    "lon": 118.8730904
+  },
+  "tags": {
+    "leisure": "park",
+    "name": "府山公园"
+  }
+},
+{
+  "type": "way",
+  "id": 410081184,
+  "center": {
+    "lat": 28.9728538,
+    "lon": 118.8624893
+  },
+  "tags": {
+    "bridge": "yes",
+    "highway": "primary",
+    "layer": "1",
+    "name": "西安门大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 528505338,
+  "center": {
+    "lat": 28.9689695,
+    "lon": 118.8688641
+  },
+  "tags": {
+    "name": "斗潭河",
+    "waterway": "canal"
+  }
+},
+{
+  "type": "way",
+  "id": 534023455,
+  "center": {
+    "lat": 28.9597517,
+    "lon": 118.8596846
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "name": "衢江中路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 534023458,
+  "center": {
+    "lat": 28.9566960,
+    "lon": 118.8587416
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "name": "衢江中路",
+    "oneway": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 568435201,
+  "center": {
+    "lat": 28.9487302,
+    "lon": 118.9086080
+  },
+  "tags": {
+    "admin_level": "6",
+    "boundary": "administrative",
+    "name": "柯城衢江边界",
+    "source": "estimated"
+  }
+},
+{
+  "type": "way",
+  "id": 568436883,
+  "center": {
+    "lat": 28.9620699,
+    "lon": 118.8686826
+  },
+  "tags": {
+    "admin_level": "8",
+    "boundary": "administrative",
+    "name": "信安府山边界"
+  }
+},
+{
+  "type": "way",
+  "id": 568436886,
+  "center": {
+    "lat": 28.9696263,
+    "lon": 118.9046732
+  },
+  "tags": {
+    "admin_level": "6",
+    "boundary": "administrative",
+    "name": "柯城衢江边界",
+    "source": "estimated"
+  }
+},
+{
+  "type": "way",
+  "id": 568437072,
+  "center": {
+    "lat": 28.9828027,
+    "lon": 118.9002661
+  },
+  "tags": {
+    "admin_level": "6",
+    "boundary": "administrative",
+    "name": "柯城衢江边界",
+    "source": "estimated"
+  }
+},
+{
+  "type": "way",
+  "id": 569301003,
+  "center": {
+    "lat": 29.0046204,
+    "lon": 118.8851624
+  },
+  "tags": {
+    "admin_level": "6",
+    "boundary": "administrative",
+    "name": "柯城衢江边界",
+    "source": "estimated"
+  }
+},
+{
+  "type": "way",
+  "id": 659861083,
+  "center": {
+    "lat": 28.9728734,
+    "lon": 118.8397687
+  },
+  "tags": {
+    "natural": "water",
+    "water": "river"
+  }
+},
+{
+  "type": "way",
+  "id": 659873619,
+  "center": {
+    "lat": 28.9558174,
+    "lon": 118.8610646
+  },
+  "tags": {
+    "admin_level": "8",
+    "boundary": "administrative",
+    "name": "府山双港边界"
+  }
+},
+{
+  "type": "way",
+  "id": 659873620,
+  "center": {
+    "lat": 28.9527155,
+    "lon": 118.8698820
+  },
+  "tags": {
+    "admin_level": "8",
+    "boundary": "administrative",
+    "name": "府山荷花边界"
+  }
+},
+{
+  "type": "way",
+  "id": 659873621,
+  "center": {
+    "lat": 28.9651717,
+    "lon": 118.8596844
+  },
+  "tags": {
+    "admin_level": "8",
+    "boundary": "administrative",
+    "name": "府山白云边界"
+  }
+},
+{
+  "type": "way",
+  "id": 659919526,
+  "center": {
+    "lat": 28.9684941,
+    "lon": 118.8439486
+  },
+  "tags": {
+    "waterway": "dam"
+  }
+},
+{
+  "type": "way",
+  "id": 659944380,
+  "center": {
+    "lat": 28.9617381,
+    "lon": 118.8574087
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "bridge": "yes",
+    "highway": "pedestrian",
+    "layer": "1",
+    "lit": "yes",
+    "name": "礼贤桥"
+  }
+},
+{
+  "type": "way",
+  "id": 683492894,
+  "center": {
+    "lat": 28.9666585,
+    "lon": 118.8921261
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683492895,
+  "center": {
+    "lat": 28.9721421,
+    "lon": 118.8784053
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683492896,
+  "center": {
+    "lat": 28.9700471,
+    "lon": 118.8796209
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683492897,
+  "center": {
+    "lat": 28.9684496,
+    "lon": 118.8810509
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683492898,
+  "center": {
+    "lat": 28.9689785,
+    "lon": 118.8831716
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683492899,
+  "center": {
+    "lat": 28.9682942,
+    "lon": 118.8843484
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683493432,
+  "center": {
+    "lat": 28.9711935,
+    "lon": 118.8828405
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683493435,
+  "center": {
+    "lat": 28.9715689,
+    "lon": 118.8826918
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683493436,
+  "center": {
+    "lat": 28.9713754,
+    "lon": 118.8819203
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 683493439,
+  "center": {
+    "lat": 28.9669449,
+    "lon": 118.8876848
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 718031543,
+  "center": {
+    "lat": 28.9738137,
+    "lon": 118.8868241
+  },
+  "tags": {
+    "name": "北门溪",
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 718033186,
+  "center": {
+    "lat": 28.9616135,
+    "lon": 118.8572638
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "bridge": "yes",
+    "highway": "pedestrian",
+    "layer": "1",
+    "lit": "yes",
+    "name": "礼贤桥",
+    "surface": "wood"
+  }
+},
+{
+  "type": "way",
+  "id": 718035325,
+  "center": {
+    "lat": 28.9713272,
+    "lon": 118.8772290
+  },
+  "tags": {
+    "name": "斗潭河",
+    "waterway": "canal"
+  }
+},
+{
+  "type": "way",
+  "id": 718088270,
+  "center": {
+    "lat": 28.9626244,
+    "lon": 118.8782466
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 718088271,
+  "center": {
+    "lat": 28.9705729,
+    "lon": 118.8810778
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 718257264,
+  "center": {
+    "lat": 28.9402572,
+    "lon": 118.8571133
+  },
+  "tags": {
+    "amenity": "school",
+    "name": "礼贤小学"
+  }
+},
+{
+  "type": "way",
+  "id": 840917081,
+  "center": {
+    "lat": 28.9707415,
+    "lon": 118.8623422
+  },
+  "tags": {
+    "name": "斗潭河",
+    "waterway": "canal"
+  }
+},
+{
+  "type": "way",
+  "id": 840917082,
+  "center": {
+    "lat": 28.9702123,
+    "lon": 118.8630541
+  },
+  "tags": {
+    "layer": "-1",
+    "name": "斗潭河",
+    "tunnel": "culvert",
+    "waterway": "canal"
+  }
+},
+{
+  "type": "way",
+  "id": 848256505,
+  "center": {
+    "lat": 28.9622334,
+    "lon": 118.8960259
+  },
+  "tags": {
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 848340654,
+  "center": {
+    "lat": 28.9673770,
+    "lon": 118.8850351
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340674,
+  "center": {
+    "lat": 28.9657699,
+    "lon": 118.8855834
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340675,
+  "center": {
+    "lat": 28.9660840,
+    "lon": 118.8848718
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340676,
+  "center": {
+    "lat": 28.9667137,
+    "lon": 118.8883612
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340677,
+  "center": {
+    "lat": 28.9668451,
+    "lon": 118.8874934
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340678,
+  "center": {
+    "lat": 28.9670867,
+    "lon": 118.8868396
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340679,
+  "center": {
+    "lat": 28.9672612,
+    "lon": 118.8860968
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340680,
+  "center": {
+    "lat": 28.9673618,
+    "lon": 118.8883363
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340683,
+  "center": {
+    "lat": 28.9676704,
+    "lon": 118.8873062
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340686,
+  "center": {
+    "lat": 28.9672946,
+    "lon": 118.8844136
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 848340694,
+  "center": {
+    "lat": 28.9765384,
+    "lon": 118.8806474
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江北路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 848340695,
+  "center": {
+    "lat": 28.9765052,
+    "lon": 118.8806196
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江北路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 862452594,
+  "center": {
+    "lat": 28.9675317,
+    "lon": 118.8771283
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 862452595,
+  "center": {
+    "lat": 28.9646000,
+    "lon": 118.8803784
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 862452596,
+  "center": {
+    "lat": 28.9663022,
+    "lon": 118.8785721
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 862890562,
+  "center": {
+    "lat": 28.9693606,
+    "lon": 118.8633241
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "name": "衢江中路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 862890563,
+  "center": {
+    "lat": 28.9634430,
+    "lon": 118.8607871
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "layer": "-1",
+    "name": "水亭门隧道",
+    "oneway": "yes",
+    "tunnel": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 862890564,
+  "center": {
+    "lat": 28.9634148,
+    "lon": 118.8608800
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "layer": "-1",
+    "name": "水亭门隧道",
+    "oneway": "yes",
+    "tunnel": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 862890565,
+  "center": {
+    "lat": 28.9597677,
+    "lon": 118.8596349
+  },
+  "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "name": "衢江中路",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 862890567,
+  "center": {
+    "lat": 28.9689780,
+    "lon": 118.8669649
+  },
+  "tags": {
+    "natural": "water"
+  }
+},
+{
+  "type": "way",
+  "id": 862890568,
+  "center": {
+    "lat": 28.9652123,
+    "lon": 118.8617792
+  },
+  "tags": {
+    "building": "yes",
+    "building:levels": "2",
+    "name": "水亭门"
+  }
+},
+{
+  "type": "way",
+  "id": 996021114,
+  "center": {
+    "lat": 28.9563431,
+    "lon": 118.8784456
+  },
+  "tags": {
+    "layer": "-1",
+    "tunnel": "culvert",
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 996021115,
+  "center": {
+    "lat": 28.9565495,
+    "lon": 118.8771873
+  },
+  "tags": {
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 996021117,
+  "center": {
+    "lat": 28.9566681,
+    "lon": 118.8757456
+  },
+  "tags": {
+    "layer": "-1",
+    "tunnel": "culvert",
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 996021118,
+  "center": {
+    "lat": 28.9559476,
+    "lon": 118.8748471
+  },
+  "tags": {
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 1021687951,
+  "center": {
+    "lat": 28.9476029,
+    "lon": 118.8425500
+  },
+  "tags": {
+    "waterway": "stream"
+  }
+},
+{
+  "type": "way",
+  "id": 1347541291,
+  "center": {
+    "lat": 28.9659688,
+    "lon": 118.8635675
+  },
+  "tags": {
+    "building": "pagoda",
+    "man_made": "tower",
+    "name": "天王塔",
+    "tower:construction": "brick",
+    "tower:type": "pagoda"
+  }
+},
+{
+  "type": "way",
+  "id": 1411877912,
+  "center": {
+    "lat": 28.9543054,
+    "lon": 118.8611725
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1411877913,
+  "center": {
+    "lat": 28.9543843,
+    "lon": 118.8611842
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1466685674,
+  "center": {
+    "lat": 28.9588852,
+    "lon": 118.8487332
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1466685675,
+  "center": {
+    "lat": 28.9590102,
+    "lon": 118.8488324
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江大桥",
+    "oneway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1473200282,
+  "center": {
+    "lat": 28.9755806,
+    "lon": 118.8667904
+  },
+  "tags": {
+    "highway": "secondary",
+    "name": "衢江北路"
+  }
+},
+{
+  "type": "way",
+  "id": 1476697090,
+  "center": {
+    "lat": 28.9652617,
+    "lon": 118.8686270
+  },
+  "tags": {
+    "building": "yes",
+    "historic": "building",
+    "layer": "1",
+    "name": "钟楼",
+    "name:en": "Bell Tower"
+  }
+},
+{
+  "type": "way",
+  "id": 1484476253,
+  "center": {
+    "lat": 28.9602719,
+    "lon": 118.8596107
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "highway": "pedestrian",
+    "lit": "yes",
+    "name": "礼贤桥",
+    "surface": "wood"
+  }
+},
+{
+  "type": "way",
+  "id": 1484476254,
+  "center": {
+    "lat": 28.9610623,
+    "lon": 118.8598640
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "highway": "pedestrian",
+    "lit": "yes",
+    "name": "礼贤桥"
+  }
+},
+{
+  "type": "way",
+  "id": 1484476255,
+  "center": {
+    "lat": 28.9630887,
+    "lon": 118.8549747
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "highway": "pedestrian",
+    "lit": "yes",
+    "name": "礼贤桥",
+    "surface": "wood"
+  }
+},
+{
+  "type": "way",
+  "id": 1484476256,
+  "center": {
+    "lat": 28.9631021,
+    "lon": 118.8549932
+  },
+  "tags": {
+    "alt_name": "信安湖景观桥",
+    "bicycle": "yes",
+    "highway": "pedestrian",
+    "lit": "yes",
+    "name": "礼贤桥"
+  }
+},
+{
+  "type": "way",
+  "id": 1494317479,
+  "center": {
+    "lat": 28.9635375,
+    "lon": 118.8721178
+  },
+  "tags": {
+    "building": "yes",
+    "historic": "building",
+    "name": "孔氏南宗家庙",
+    "name:en": "Confucius Temple",
+    "religion": "confucian"
+  }
+},
+{
+  "type": "way",
+  "id": 1494320062,
+  "center": {
+    "lat": 28.9633070,
+    "lon": 118.8617972
+  },
+  "tags": {
+    "area": "yes",
+    "historic": "district",
+    "name": "衢州古城·水亭门历史文化街区",
+    "place": "city_block",
+    "tourism": "theme_park"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437245,
+  "center": {
+    "lat": 28.9578895,
+    "lon": 118.8790308
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437246,
+  "center": {
+    "lat": 28.9569394,
+    "lon": 118.8789408
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437247,
+  "center": {
+    "lat": 28.9588620,
+    "lon": 118.8792418
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437248,
+  "center": {
+    "lat": 28.9595824,
+    "lon": 118.8794090
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437249,
+  "center": {
+    "lat": 28.9603073,
+    "lon": 118.8795506
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437257,
+  "center": {
+    "lat": 28.9595396,
+    "lon": 118.8809040
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437258,
+  "center": {
+    "lat": 28.9596702,
+    "lon": 118.8802530
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437272,
+  "center": {
+    "lat": 28.9653623,
+    "lon": 118.8905497
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554437288,
+  "center": {
+    "lat": 28.9691777,
+    "lon": 118.8841902
+  },
+  "tags": {
+    "natural": "water",
+    "water": "pond"
+  }
+},
+{
+  "type": "way",
+  "id": 1554439316,
+  "center": {
+    "lat": 28.9715184,
+    "lon": 118.8916018
+  },
+  "tags": {
+    "natural": "water"
+  }
+},
+{
+  "type": "way",
+  "id": 1554439317,
+  "center": {
+    "lat": 28.9700448,
+    "lon": 118.8906679
+  },
+  "tags": {
+    "natural": "water"
+  }
+},
+{
+  "type": "way",
+  "id": 1554439318,
+  "center": {
+    "lat": 28.9707335,
+    "lon": 118.8904284
+  },
+  "tags": {
+    "natural": "water"
+  }
+},
+{
+  "type": "way",
+  "id": 1554439319,
+  "center": {
+    "lat": 28.9698626,
+    "lon": 118.8899100
+  },
+  "tags": {
+    "natural": "water"
+  }
+},
+{
+  "type": "way",
+  "id": 1554439346,
+  "center": {
+    "lat": 28.9691912,
+    "lon": 118.8804337
+  },
+  "tags": {
+    "waterway": "stream"
+  }
+},
+{
+  "type": "relation",
+  "id": 2060845,
+  "center": {
+    "lat": 28.9680265,
+    "lon": 118.8840340
+  },
+  "tags": {
+    "name": "信安湖",
+    "natural": "water",
+    "type": "multipolygon",
+    "water": "lake"
+  }
+},
+{
+  "type": "relation",
+  "id": 3278466,
+  "center": {
+    "lat": 28.9259934,
+    "lon": 118.9227166
+  },
+  "tags": {
+    "admin_level": "6",
+    "boundary": "administrative",
+    "name": "衢江区",
+    "name:de": "Qujiang",
+    "name:en": "Qujiang District",
+    "name:es": "Qujiang",
+    "name:fr": "District de Qujiang",
+    "name:it": "Distretto di Qujiang",
+    "name:ja": "衢江区",
+    "name:ko": "취장구",
+    "name:nan": "Kû-kang-khu",
+    "name:no": "Qujiang",
+    "name:ru": "Цюйцзян",
+    "name:sv": "Qujiang",
+    "name:ur": "چوجیانگ ضلع، چیوژوو",
+    "name:vi": "Cù Giang",
+    "name:wuu": "衢江区",
+    "name:yue": "衢江區",
+    "name:zh": "衢江区",
+    "name:zh-Hans": "衢江区",
+    "name:zh-Hant": "衢江區",
+    "name:zh-Latn-pinyin": "Qújiāng Qū",
+    "type": "boundary",
+    "wikidata": "Q1334566",
+    "wikipedia": "en:Qujiang District, Quzhou"
+  }
+},
+{
+  "type": "relation",
+  "id": 8098371,
+  "center": {
+    "lat": 28.9617316,
+    "lon": 118.8667751
+  },
+  "tags": {
+    "admin_level": "8",
+    "boundary": "administrative",
+    "name": "府山街道",
+    "type": "boundary",
+    "wikidata": "Q11063316"
+  }
+},
+{
+  "type": "relation",
+  "id": 20277647,
+  "center": {
+    "lat": 28.9542303,
+    "lon": 118.8507550
+  },
+  "tags": {
+    "name": "严家淤岛",
+    "place": "island",
+    "type": "multipolygon"
+  }
+}
+
+  ]
+}
