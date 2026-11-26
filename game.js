@@ -1813,6 +1813,9 @@
     restDock: $('rest-dock'), restBadge: $('rest-badge'), restTitle: $('rest-title'), restMeta: $('rest-meta'), restPoem: $('rest-poem'),
     restExitLabel: $('rest-exit-label'), restShowUi: $('rest-show-ui-btn'), restTapeBtn: $('rest-tape-btn'),
     restAmbientBtn: $('rest-ambient-btn'), restAmbientLabel: $('rest-ambient-label'),
+    restVignetteBtn: $('rest-vignette-btn'), restVignetteLabel: $('rest-vignette-label'),
+    restVignetteCaption: $('rest-vignette-caption'), restVignetteTag: $('rest-vignette-tag'),
+    restVignetteSpeaker: $('rest-vignette-speaker'), restVignetteLine: $('rest-vignette-line'),
   };
   const roadActions = {
     left: ['↰', '左转'], right: ['↱', '右转'], back: ['↶', '调头'], straight: ['↑', '直行'], arrival: ['◆', '即将到达'],
@@ -2054,11 +2057,23 @@
     const vehicle = boat ?? s.vehicle;
     const resting = Boolean(s.rest?.active);
     const restZen = Boolean(resting && s.rest.uiHidden);
+    const vignette = resting ? s.rest.vignette : null;
+    const vignetteActive = Boolean(vignette?.active);
     hud.classList.toggle('is-resting', resting);
     hud.classList.toggle('is-rest-zen', restZen);
+    hud.classList.toggle('is-vignette', vignetteActive);
     if (role.restDock) {
       show(role.restDock, resting && !restZen);
       if (role.restShowUi) show(role.restShowUi, restZen);
+      if (role.restVignetteCaption) {
+        show(role.restVignetteCaption, vignetteActive && !restZen);
+        if (vignetteActive) {
+          role.restVignetteCaption.dataset.kind = vignette.kind || 'tea';
+          titleFor(role.restVignetteTag, vignette.tag || '微镜头');
+          titleFor(role.restVignetteSpeaker, vignette.speaker || vignette.title || '');
+          titleFor(role.restVignetteLine, vignette.lines?.[vignette.lineIndex || 0] || '');
+        }
+      }
       if (resting) {
         const r = s.rest;
         const badgeText = r.kind === 'car' ? '停车赏景' : r.kind === 'boat' ? '泛舟听水' : r.kind === 'bench' ? '观景小憩' : '歇脚小憩';
@@ -2072,6 +2087,17 @@
           const ambId = r.ambient || 'off';
           role.restAmbientBtn.setAttribute('aria-pressed', String(ambId !== 'off'));
           titleFor(role.restAmbientLabel, restAmbientLabel(ambId));
+        }
+        if (role.restVignetteBtn && role.restVignetteLabel) {
+          const canVig = r.kind === 'bench' || r.kind === 'ground';
+          show(role.restVignetteBtn, canVig);
+          if (canVig) {
+            const area = D.district(s.player);
+            const vKind = vignetteActive ? vignette.kind : (r.spot?.vignette || ((area === '水亭门古街' || area === '孔氏南宗家庙') ? 'opera' : 'tea'));
+            role.restVignetteBtn.dataset.kind = vKind;
+            role.restVignetteBtn.setAttribute('aria-pressed', String(vignetteActive));
+            titleFor(role.restVignetteLabel, vignetteActive ? (vKind === 'opera' ? '听戏中' : '奉茶中') : (vKind === 'opera' ? '听戏' : '奉茶'));
+          }
         }
         for (const btn of role.restDock.querySelectorAll('[data-rest-speed]')) {
           btn.setAttribute('aria-pressed', String(Number(btn.dataset.restSpeed) === (r.timeScale || 1)));
@@ -2447,6 +2473,10 @@
       event.preventDefault();
       sim.cycleRestAmbient?.();
       drawHud();
+    } else if (!event.repeat && sim?.state?.rest?.active && code === 'KeyK') {
+      event.preventDefault();
+      sim.toggleRestVignette?.();
+      drawHud();
     } else if (!event.repeat && ['KeyE', 'KeyF', 'KeyG', 'KeyM', 'KeyP', 'KeyT', 'KeyV', 'KeyC', 'KeyR', 'KeyN', 'KeyX', 'KeyH', 'KeyL', 'KeyZ'].includes(code)) {
       event.preventDefault();
       action(code);
@@ -2556,6 +2586,12 @@
   $('rest-ambient-btn')?.addEventListener('click', event => {
     event.currentTarget.blur();
     sim?.cycleRestAmbient?.();
+    drawHud();
+    scene.focus({ preventScroll: true });
+  });
+  $('rest-vignette-btn')?.addEventListener('click', event => {
+    event.currentTarget.blur();
+    sim?.toggleRestVignette?.();
     drawHud();
     scene.focus({ preventScroll: true });
   });

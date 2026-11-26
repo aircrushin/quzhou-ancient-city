@@ -33,13 +33,13 @@
     })();
   </script>
   <link rel="stylesheet" href="style.css?v=27">
-  <link rel="stylesheet" href="interface.css?v=23">
+  <link rel="stylesheet" href="interface.css?v=25">
   <script defer src="three.min.js"></script>
   <script defer src="glb-loader.js?v=7"></script>
   <script defer src="quzhou-roads.js?v=2"></script>
   <script defer src="quzhou-landmarks.js?v=4"></script>
   <script defer src="quzhou-atlas.js?v=3"></script>
-  <script defer src="world.js?v=35"></script>
+  <script defer src="world.js?v=36"></script>
   <script defer src="district-architecture.js?v=14"></script>
   <script defer src="warehouse.js?v=5"></script>
   <script defer src="coast.js?v=5"></script>
@@ -48,7 +48,7 @@
   <script defer src="night-market.js?v=13"></script>
   <script defer src="boulevard-art.js?v=17"></script>
   <script defer src="promenade-art.js?v=15"></script>
-  <script defer src="vehicles.js?v=36"></script>
+  <script defer src="vehicles.js?v=38"></script>
   <script defer src="concept-car.js?v=3"></script>
   <script defer src="upgrades.js?v=1"></script>
   <script defer src="boat-art.js?v=7"></script>
@@ -56,13 +56,13 @@
   <script defer src="look.js?v=20"></script>
   <script defer src="street-render.js?v=20"></script>
   <script defer src="navigation.js?v=18"></script>
-  <script defer src="english.js?v=20"></script>
+  <script defer src="english.js?v=21"></script>
   <script defer src="language.js?v=1"></script>
   <script defer src="taxi.js?v=8"></script>
   <script defer src="traffic.js?v=4"></script>
-  <script defer src="sim.js?v=42"></script>
+  <script defer src="sim.js?v=44"></script>
   <script defer src="touch.js?v=24"></script>
-  <script defer src="game.js?v=41"></script>
+  <script defer src="game.js?v=42"></script>
 </head>
 <body>
   <main id="game" aria-label="衢州古城">
@@ -205,6 +205,11 @@
         <span><svg viewBox="0 0 16 20" fill="none" aria-hidden="true"><rect x="2.5" y="1.5" width="11" height="17" rx="5.5"/><path d="M8 3v5"/></svg>鼠标环视</span>
         <span><kbd>C</kbd>机位</span><span class="desktop-interact"><kbd>E</kbd>交互</span><span class="desktop-drive-only"><kbd>H</kbd>鸣笛</span><span class="desktop-car-only"><kbd>L</kbd>车灯</span><span><kbd>F</kbd>寻景</span><span><kbd>T</kbd>声景</span><span><kbd>Z</kbd>憩息</span><span class="desktop-walk-only"><kbd>V</kbd>召车</span><span><kbd>P</kbd>拍照</span><span><kbd>N</kbd>昼夜</span><span><kbd>X</kbd>天气</span><span><kbd>G</kbd>工坊</span><span><kbd>M</kbd>地图</span>
       </div>
+      <div class="vignette-bars" aria-hidden="true"><i></i><i></i></div>
+      <div id="rest-vignette-caption" class="rest-vignette-caption" role="status" aria-live="polite" hidden>
+        <div class="rest-vignette-caption-head"><span id="rest-vignette-tag" class="rest-vignette-tag">奉茶微镜头</span><strong id="rest-vignette-speaker">马站底茶博士</strong></div>
+        <p id="rest-vignette-line"></p>
+      </div>
       <div id="rest-dock" class="rest-dock" role="region" aria-label="休息模式观景栏" hidden>
         <div class="rest-head">
           <div class="rest-title-group">
@@ -222,6 +227,7 @@
           </div>
           <div class="rest-actions">
             <button id="rest-ambient-btn" class="rest-btn rest-ambient-btn" type="button" aria-pressed="true" title="切换古城白噪音 / 茶香氛围音 (B)"><kbd>B</kbd><span id="rest-ambient-label">湖风细浪</span></button>
+            <button id="rest-vignette-btn" class="rest-btn rest-vignette-btn" type="button" aria-pressed="false" title="播放当前休憩点的奉茶或听戏微镜头 (K)"><kbd>K</kbd><span id="rest-vignette-label">奉茶</span></button>
             <button id="rest-time-btn" class="rest-btn" type="button"><kbd>N</kbd><span>时段</span></button>
             <button id="rest-weather-btn" class="rest-btn" type="button"><kbd>X</kbd><span>天气</span></button>
             <button id="rest-tape-btn" class="rest-btn" type="button"><kbd>T</kbd><span>声景</span></button>
@@ -464,7 +470,7 @@
             <div><dt><kbd>SHIFT</kbd><kbd>SPACE</kbd></dt><dd>奔跑或氮气加速 / 手刹或船艇制动</dd></div>
             <div><dt><kbd>M</kbd><kbd>C</kbd></dt><dd>查看地图 / 切换机位</dd></div>
             <div><dt><kbd>V</kbd><kbd>P</kbd></dt><dd>一键召唤常用座驾 / 自由镜头拍照模式</dd></div>
-            <div><dt><kbd>Z</kbd></dt><dd>随时进入休息模式（观景长椅就座 / 停车赏景，支持 1×/15×/60× 昼夜流光、B 氛围音与 H 净屏，舆图「憩息」可直达长椅）</dd></div>
+            <div><dt><kbd>Z</kbd></dt><dd>随时进入休息模式（观景长椅就座 / 停车赏景，支持 1×/15×/60× 昼夜流光、B 氛围音、K 奉茶/听戏微镜头与 H 净屏，舆图「憩息」可直达长椅）</dd></div>
             <div><dt><kbd>H</kbd><kbd>L</kbd></dt><dd>鸣笛（行人避让 / 船艇汽笛）/ 手动切换车灯</dd></div>
             <div><dt><kbd>F</kbd><kbd>T</kbd><kbd>R</kbd><kbd>N</kbd><kbd>X</kbd></dt><dd>寻景 / 声景随身听 / 电台 / 昼夜 / 天气</dd></div>
           </dl>

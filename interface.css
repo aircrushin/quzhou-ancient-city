@@ -2083,13 +2083,59 @@ html[lang="en"] #map-panel .map-col-tab span { font-size: .6rem; }
   pointer-events: none !important;
 }
 .hud.is-rest-zen #toast,
-.hud.is-rest-zen #radio-message {
+.hud.is-rest-zen #radio-message,
+.hud.is-rest-zen #rest-vignette-caption {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+.hud .vignette-bars {
+  position: absolute; inset: 0; pointer-events: none; z-index: 4; opacity: 0;
+  transition: opacity .45s ease;
+}
+.hud .vignette-bars i {
+  position: absolute; left: 0; right: 0; height: 26px;
+  background: linear-gradient(180deg, rgba(6, 10, 12, .86), rgba(6, 10, 12, .56));
+}
+.hud .vignette-bars i:first-child { top: 0; }
+.hud .vignette-bars i:last-child {
+  bottom: 0; height: 22px;
+  background: linear-gradient(0deg, rgba(6, 10, 12, .84), rgba(6, 10, 12, .45));
+}
+.hud.is-vignette .vignette-bars { opacity: 1; }
+.hud .rest-vignette-caption {
+  position: absolute; left: 50%; bottom: max(146px, calc(var(--safe-bottom) + 142px));
+  transform: translateX(-50%); width: min(90vw, 600px);
+  padding: 9px 16px; border-radius: 10px; pointer-events: none; z-index: 6;
+  background: linear-gradient(180deg, rgba(16, 28, 30, .86), rgba(11, 19, 22, .92));
+  border: 1px solid rgba(176, 224, 206, .38);
+  box-shadow: 0 12px 30px rgba(4, 9, 12, .46);
+  backdrop-filter: blur(10px); text-align: center;
+  transition: opacity .28s ease, transform .28s ease;
+}
+.hud .rest-vignette-caption[data-kind="opera"] {
+  background: linear-gradient(180deg, rgba(36, 18, 18, .88), rgba(22, 12, 14, .93));
+  border-color: rgba(242, 178, 114, .54);
+}
+.hud .rest-vignette-caption-head {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;
+}
+.hud .rest-vignette-tag {
+  padding: 1px 7px; border-radius: 999px; font: 700 .67rem/1.35 var(--ui); letter-spacing: .04em;
+  border: 1px solid rgba(132, 232, 196, .56); background: rgba(126, 226, 198, .18); color: #adf7de;
+}
+.hud .rest-vignette-caption[data-kind="opera"] .rest-vignette-tag {
+  border-color: rgba(247, 176, 108, .66); background: rgba(235, 110, 74, .22); color: #ffd9b0;
+}
+.hud .rest-vignette-caption-head strong {
+  font: 700 .8rem/1.2 var(--display); color: #f6e7c4;
+}
+.hud .rest-vignette-caption p {
+  margin: 0; font: 550 .88rem/1.45 var(--chart-serifs); color: #fbf5e6; letter-spacing: .02em;
+  text-wrap: balance;
+}
 .hud .rest-dock {
   position: absolute; left: 50%; bottom: max(18px, calc(var(--safe-bottom) + 14px));
-  transform: translateX(-50%); width: min(95vw, 940px);
+  transform: translateX(-50%); width: min(96vw, 1020px);
   display: flex; flex-direction: column; gap: 9px;
   padding: 12px 16px; border-radius: 10px;
   background: linear-gradient(180deg, rgba(14, 26, 30, .86), rgba(11, 20, 24, .92));
@@ -2156,12 +2202,24 @@ html[lang="en"] #map-panel .map-col-tab span { font-size: .6rem; }
 .hud .rest-ambient-btn[aria-pressed="false"] {
   opacity: .84;
 }
+.hud .rest-vignette-btn[aria-pressed="true"] {
+  border-color: rgba(245, 206, 118, .86);
+  background: linear-gradient(135deg, rgba(244, 196, 92, .28), rgba(126, 226, 198, .22));
+  color: #fff3cc;
+  box-shadow: 0 0 14px rgba(244, 196, 92, .22);
+}
+.hud .rest-vignette-btn[data-kind="opera"][aria-pressed="true"] {
+  border-color: rgba(252, 152, 108, .88);
+  background: linear-gradient(135deg, rgba(226, 86, 62, .34), rgba(244, 186, 92, .24));
+  color: #ffe7d1;
+  box-shadow: 0 0 14px rgba(232, 108, 74, .26);
+}
 html[lang="en"] .hud .rest-dock {
-  width: min(96vw, 1040px);
+  width: min(97vw, 1120px);
 }
 html[lang="en"] .hud .rest-chip,
 html[lang="en"] .hud .rest-btn {
-  padding: 0 8px; gap: 4px; font-size: .72rem;
+  padding: 0 7.5px; gap: 4px; font-size: .71rem;
 }
 .hud .rest-btn kbd {
   min-width: 16px; height: 16px; padding: 0 3px; border-radius: 3px;
@@ -2193,6 +2251,12 @@ html[lang="en"] .hud .rest-btn {
 }
 .hud .buff-pill[data-buff="serene"] {
   border-color: rgba(126, 226, 198, .72); color: #bff8e6; background: rgba(16, 40, 36, .88);
+}
+.hud .buff-pill[data-buff="tea_grace"] {
+  border-color: rgba(154, 232, 168, .78); color: #d4fbd8; background: rgba(20, 44, 30, .90);
+}
+.hud .buff-pill[data-buff="opera_grace"] {
+  border-color: rgba(248, 174, 112, .82); color: #ffe0c2; background: rgba(48, 22, 20, .90);
 }
 @container stage (max-width: 720px) {
   .hud .rest-dock { padding: 10px 12px; gap: 7px; }

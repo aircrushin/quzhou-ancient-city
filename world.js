@@ -118,12 +118,47 @@
     { id: 'rain', name: '青瓦檐雨', desc: '细雨轻落青瓦檐阶，滴答绵延涤静心尘。' },
     { id: 'off', name: '氛围静音', desc: '关闭休憩白噪音，静听古城原生街景。' },
   ];
+  const REST_VIGNETTES = {
+    rest_mazhandi: {
+      kind: 'tea', tag: '奉茶微镜头', title: '开化龙顶 · 奉茶', speaker: '马站底茶博士',
+      lines: ['客官久行辛苦，一盏新沏的开化龙顶，请慢用。', '茶汤青绿回甘，就着老街炭香歇口热气。'],
+    },
+    rest_xinan_lake: {
+      kind: 'tea', tag: '奉茶微镜头', title: '信安湖 · 临湖清茗', speaker: '亲水茶娘',
+      lines: ['湖风清润，这盏三衢春茶正好佐一池晚霞。', '远眺严家淤灯塔明灭，茶香与波光最相宜。'],
+    },
+    rest_fushan: {
+      kind: 'tea', tag: '奉茶微镜头', title: '府山松影 · 汲泉烹茶', speaker: '山亭茶客',
+      lines: ['松影落阶，请饮一盏府山清泉现沏的春茗。', '听林梢鸟语、看钟灵塔影，歇罢脚步更轻快。'],
+    },
+    rest_shuitingmen: {
+      kind: 'opera', tag: '听戏微镜头', title: '水亭门 · 婺剧清唱', speaker: '水亭门婺剧名伶',
+      lines: ['「水亭门外衢江晚，一曲婺腔入画来——」', '「三街七巷灯初上，故城烟雨醉游人。」'],
+    },
+    rest_kongmiao: {
+      kind: 'opera', tag: '听戏微镜头', title: '南孔红墙 · 西安高腔', speaker: '三衢高腔雅士',
+      lines: ['「南孔书声传千载，西安高腔绕朱墙——」', '「古柏森森风入袖，一曲清音洗尘心。」'],
+    },
+    rest_belltower: {
+      kind: 'opera', tag: '听戏微镜头', title: '钟楼巷口 · 票友清板', speaker: '北门老票友',
+      lines: ['「北门古轴听钟韵，茶楼戏台板鼓明——」', '「莫道行车岁月急，且驻芳阶听一折。」'],
+    },
+    default_tea: {
+      kind: 'tea', tag: '奉茶微镜头', title: '古城街头 · 奉茶歇脚', speaker: '古城茶客',
+      lines: ['遇着便是缘分，请饮一盏热乎的衢州青茶。', '清风徐来茶香袅袅，暂忘尘嚣且享片刻清欢。'],
+    },
+    default_opera: {
+      kind: 'opera', tag: '听戏微镜头', title: '古巷戏韵 · 折扇清唱', speaker: '街头戏曲票友',
+      lines: ['「三衢古巷风雅在，折扇轻摇起高腔——」', '「一盏清茶一段戏，满城灯火伴君行。」'],
+    },
+  };
   const REST_SPOTS = [
     {
       id: 'rest_xinan_lake',
       name: '信安湖亲水木椅',
       district: '信安湖亲水步道',
       ambient: 'lake',
+      vignette: 'tea',
       x: 325.8, z: 132.4,
       seatX: 325.88, seatZ: 132.4,
       exitX: 327.08, exitZ: 132.4,
@@ -140,6 +175,7 @@
       name: '水亭门临江石凳',
       district: '水亭门古街',
       ambient: 'lake',
+      vignette: 'opera',
       x: -160.0, z: -92.0,
       seatX: -160.07, seatZ: -91.96,
       exitX: -161.05, exitZ: -91.32,
@@ -156,6 +192,7 @@
       name: '南孔家庙古柏石凳',
       district: '孔氏南宗家庙',
       ambient: 'temple',
+      vignette: 'opera',
       x: 150.0, z: -6.0,
       seatX: 150.05, seatZ: -6.07,
       exitX: 150.72, exitZ: -7.02,
@@ -172,6 +209,7 @@
       name: '府山公园松影长椅',
       district: '府山公园',
       ambient: 'temple',
+      vignette: 'tea',
       x: 169.0, z: 91.0,
       seatX: 169.06, seatZ: 90.94,
       exitX: 169.88, exitZ: 90.12,
@@ -188,6 +226,7 @@
       name: '衢州钟楼听钟长椅',
       district: '县西街 · 钟楼底',
       ambient: 'tea',
+      vignette: 'opera',
       x: 46.0, z: -90.0,
       seatX: 45.95, seatZ: -90.06,
       exitX: 45.15, exitZ: -90.92,
@@ -204,6 +243,7 @@
       name: '马站底茶肆歇脚椅',
       district: '马站底 · 上下街',
       ambient: 'tea',
+      vignette: 'tea',
       x: 90.0, z: 130.0,
       seatX: 89.93, seatZ: 129.97,
       exitX: 88.84, exitZ: 129.54,
@@ -2958,5 +2998,5 @@
       initialTextures: [...Object.values(textures), streetShade], setDetail, updateVisibleStreet };
   }
 
-  window.Tideline = Object.assign(window.Tideline || {}, { build, buildSteps, finishBuild, X, Z, BOUNDS, ROAD, JOBS, HUB, DELIVERY, STASH, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, STREET_EVENTS, clamp, distance, angleDiff, rng, nearest, nearestRoad, routeBetween, district });
+  window.Tideline = Object.assign(window.Tideline || {}, { build, buildSteps, finishBuild, X, Z, BOUNDS, ROAD, JOBS, HUB, DELIVERY, STASH, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, REST_VIGNETTES, STREET_EVENTS, clamp, distance, angleDiff, rng, nearest, nearestRoad, routeBetween, district });
 })();

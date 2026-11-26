@@ -3235,8 +3235,9 @@
       person.turnLean = lerp(person.turnLean ?? 0, D.clamp(yawRate * .042 * move, -.16, .16), 1 - Math.exp(-8 * safeDt));
       if (person.umbrella || person.handLantern) {
         const propBlend = safeDt > 1e-4 ? (1 - Math.exp(-7.5 * safeDt)) : 1;
-        const wantsUmbrella = Boolean(person.umbrella && env && env.rain > .32 && !fleeing && !crouching && !reaction && !(person.player && env.sheltered));
-        const wantsLantern = Boolean(person.handLantern && env && env.night > .36 && env.rain < .42 && !fleeing && !crouching && !reaction && !person.sitting);
+        const busyProp = Boolean(person.restAction);
+        const wantsUmbrella = Boolean(person.umbrella && env && env.rain > .32 && !fleeing && !crouching && !reaction && !busyProp && !(person.player && env.sheltered));
+        const wantsLantern = Boolean(person.handLantern && env && env.night > .36 && env.rain < .42 && !fleeing && !crouching && !reaction && !person.sitting && !busyProp);
         person.umbrellaOpen = lerp(person.umbrellaOpen ?? 0, wantsUmbrella ? 1 : 0, propBlend);
         person.lanternOpen = lerp(person.lanternOpen ?? 0, wantsLantern ? 1 : 0, propBlend);
         if (person.umbrella) {
@@ -3303,6 +3304,28 @@
       person.head.rotation.x = lerp(standHeadX, -.048 + Math.sin(person.breath * .25) * .042, sit);
       person.head.rotation.y = lerp(standHeadY, Math.sin(person.breath * .38) * .22, sit);
       person.head.rotation.z = lerp(standHeadZ, -.025 * Math.sin(person.breath * .38), sit);
+      const restAct = person.restAction || '';
+      const actT = Math.max(0, (env?.clock ?? 0) - (person.restActionStart ?? 0));
+      if (restAct === 'teaServe') {
+        const bow = person.restActionBow ?? 0;
+        person.chest.rotation.x += .18 * bow;
+        person.head.rotation.x = .08 * bow + .035 * Math.sin(actT * 1.7);
+        person.head.rotation.y = .04 * Math.sin(actT * .9);
+      } else if (restAct === 'operaPerform') {
+        const sway = Math.sin(actT * 1.35);
+        person.chest.rotation.y += .24 * sway;
+        person.chest.rotation.z += .05 * Math.cos(actT * 1.35);
+        person.head.rotation.y = -.28 * sway;
+        person.head.rotation.x = -.04 + .08 * Math.sin(actT * 2.6);
+      } else if (restAct === 'teaSip' && sit > .3) {
+        const sipWave = Math.max(0, Math.sin(actT * 1.15 - .35));
+        person.head.rotation.x += .14 * sipWave;
+        person.head.rotation.y = lerp(person.head.rotation.y, (person.restActionSide ?? 1) * .18, .65);
+      } else if (restAct === 'operaListen' && sit > .3) {
+        const beat = Math.sin(actT * 2.8);
+        person.head.rotation.x += .06 * beat;
+        person.head.rotation.y = (person.restActionSide ?? 1) * .16 + .10 * Math.sin(actT * 1.3);
+      }
 
       const swingMul = person.armSwingMul ?? 1;
       for (const limb of person.limbs) {
@@ -3381,6 +3404,36 @@
           limb.arm.rotation.y = .14;
           limb.arm.rotation.z = -.32 + Math.sin(waveT) * .28;
           limb.elbow.rotation.x = -.48 - Math.sin(waveT) * .20;
+        }
+        if (restAct === 'teaServe' && !fleeing && !reaction) {
+          const bow = person.restActionBow ?? 0;
+          limb.arm.rotation.x = -.54 - .12 * bow;
+          limb.arm.rotation.y = -limb.side * .18;
+          limb.arm.rotation.z = limb.side * .04;
+          limb.elbow.rotation.x = -1.00 + .08 * bow;
+        } else if (restAct === 'operaPerform' && !fleeing && !reaction) {
+          const sweep = Math.sin(actT * 2.05);
+          const sway = Math.sin(actT * 1.35);
+          if (limb.side === -1) {
+            limb.arm.rotation.x = -1.32 + .36 * sweep;
+            limb.arm.rotation.y = .22 + .30 * Math.cos(actT * 1.35);
+            limb.arm.rotation.z = -.42 - .22 * sweep;
+            limb.elbow.rotation.x = -.62 - .32 * Math.sin(actT * 2.05 + .55);
+          } else {
+            limb.arm.rotation.x = -.70 - .22 * Math.cos(actT * 1.35);
+            limb.arm.rotation.y = -.26 + .18 * sway;
+            limb.arm.rotation.z = .36 + .16 * sway;
+            limb.elbow.rotation.x = -.78 - .16 * Math.cos(actT * 1.35);
+          }
+        } else if (restAct === 'teaSip' && limb.side === -1 && sit > .3) {
+          const sipWave = Math.max(0, Math.sin(actT * 1.15 - .35));
+          limb.arm.rotation.x = lerp(limb.arm.rotation.x, -.76 - .24 * sipWave, .9);
+          limb.arm.rotation.y = lerp(limb.arm.rotation.y, .38, .9);
+          limb.arm.rotation.z = lerp(limb.arm.rotation.z, -.14, .9);
+          limb.elbow.rotation.x = lerp(limb.elbow.rotation.x, -1.10 - .34 * sipWave, .9);
+        } else if (restAct === 'operaListen' && limb.side === -1 && sit > .3) {
+          const beat = Math.max(0, Math.sin(actT * 2.8));
+          limb.elbow.rotation.x -= .10 * beat;
         }
       }
       if (person.distant) {
@@ -3489,6 +3542,9 @@
     let ambientGainValue = 0;
     let ambientPulseNext = 0;
     let ambientPulseStep = 0;
+    let vignetteAudioKind = '';
+    let vignetteAudioNext = 0;
+    let vignetteAudioStep = 0;
     const midi = note => 440 * 2 ** ((note - 69) / 12);
     function start() {
       if (!Context) return;
@@ -3751,6 +3807,74 @@
       }
       return ambientId;
     }
+    function startVignetteAudio(kind) {
+      const next = (kind === 'tea' || kind === 'opera') ? kind : '';
+      vignetteAudioKind = next;
+      vignetteAudioNext = 0;
+      vignetteAudioStep = 0;
+      if (next) start();
+      return vignetteAudioKind;
+    }
+    function stopVignetteAudio() {
+      vignetteAudioKind = '';
+      vignetteAudioNext = 0;
+      vignetteAudioStep = 0;
+      return '';
+    }
+    function scheduleVignetteGrain(kind, at, idx) {
+      if (kind === 'tea') {
+        if (idx === 0) {
+          tone(195, .09, .055, 'triangle', at, 132);
+          tone(midi(62), 1.1, .036, 'sine', at + .14);
+          tone(midi(69), 1.1, .030, 'sine', at + .28);
+          return .95;
+        }
+        if (idx <= 3) {
+          noiseBurst(860 + idx * 240, 1.35, 1.05, .048, at, 'bandpass');
+          const drop = 1280 + idx * 165;
+          tone(drop, .08, .016, 'sine', at + .22, drop * 1.28);
+          tone(drop * .86, .065, .012, 'sine', at + .58, drop * 1.12);
+          return .92;
+        }
+        if (idx === 4) {
+          tone(2680, .16, .030, 'sine', at, 2650);
+          tone(4020, .11, .014, 'sine', at + .005, 3980);
+          return .85;
+        }
+        const guqin = [62, 69, 74, 76, 74, 69, 64, 62];
+        const n = midi(guqin[(idx - 5) % guqin.length]);
+        tone(n, 1.35, .040, 'sine', at, n * .997);
+        tone(n * 2, .52, .013, 'triangle', at);
+        return 1.15;
+      }
+      if (kind === 'opera') {
+        const phrase = [74, 76, 79, 81, 79, 76, 74, 72, 74, 76, 79, 81, 84, 81, 79, 74];
+        const f = midi(phrase[idx % phrase.length]);
+        const bend = idx % 4 === 1 ? 1.022 : idx % 4 === 3 ? .985 : 1.006;
+        tone(f, .52, .068, 'triangle', at, f * bend);
+        tone(f * 1.5, .36, .018, 'sine', at + .02, f * 1.5 * bend);
+        if (idx % 4 === 0) {
+          tone(1140, .036, .060, 'square', at, 880);
+          noiseBurst(2900, 3.2, .032, .024, at, 'bandpass');
+        } else if (idx % 4 === 2) {
+          tone(265, .068, .052, 'triangle', at, 175);
+        }
+        if (idx % 8 === 0) bellStrike(659, .030, at + .03, 1.25);
+        return .56 + (idx % 4 === 3 ? .16 : 0);
+      }
+      return 1.2;
+    }
+    function tickVignette(state, moment) {
+      if (!vignetteAudioKind || state.paused || !enabled) {
+        vignetteAudioNext = 0;
+        return;
+      }
+      if (vignetteAudioNext < moment - .15) vignetteAudioNext = moment + .04;
+      while (vignetteAudioNext <= moment + .18) {
+        const gap = scheduleVignetteGrain(vignetteAudioKind, vignetteAudioNext, vignetteAudioStep++);
+        vignetteAudioNext += Math.max(.26, gap);
+      }
+    }
     function scheduleAmbientPulse(id, at, idx, level) {
       if (level <= .02) return 1.5;
       switch (id) {
@@ -3789,7 +3913,7 @@
     }
     function tickAmbient(state, moment, isDriving) {
       const active = !state.paused && enabled && ambientId !== 'off';
-      const duck = tapeId ? .42 : (isDriving && station >= 0 ? .35 : 1);
+      const duck = vignetteAudioKind ? .28 : tapeId ? .42 : (isDriving && station >= 0 ? .35 : 1);
       const rainScale = ambientId === 'rain' && (state.rain ?? 0) > .4 ? .55 : 1;
       const targetGain = active ? duck * rainScale : 0;
       ambientGainValue = targetGain;
@@ -3861,6 +3985,7 @@
       engineVolume.gain.setTargetAtTime(isDriving ? .13 + D.clamp(speed / 45, 0, 1) * (.20 + engLv * .018) : 0, moment, .08);
       filter.frequency.setTargetAtTime(110 + engLv * 48 + speed * (atSea ? 11 : 7.4) + (state.throttle ? 72 + engLv * 22 : 0), moment, .10);
       tickAmbient(state, moment, isDriving);
+      tickVignette(state, moment);
       if (!state.paused && enabled && tapeId) {
         if (tapeNext < moment - .15) tapeNext = moment + .02;
         while (tapeNext <= moment + .18) {
@@ -3888,6 +4013,8 @@
       }
     }
     return { start, tick, toggleStation, setEnabled, playTape, stopTape, playTapePreview, horn, streetSizzle, templeChime, setAmbient,
+      startVignetteAudio, stopVignetteAudio,
+      getVignetteAudio: () => vignetteAudioKind,
       getAmbient: () => ambientId,
       getAmbientGain: () => ambientGainValue,
       activeTape: () => tapeId,

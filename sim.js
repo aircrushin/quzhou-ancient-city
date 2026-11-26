@@ -2,7 +2,7 @@
   'use strict';
   const T = window.THREE;
   const D = window.Tideline;
-  const { HUB, CARS, MARINE, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, STREET_EVENTS, clamp, distance, angleDiff } = D;
+  const { HUB, CARS, MARINE, RACE, LAKE_RACE, LAKE_RACE_START, TAPES, PHOTO_SPOTS, STREET_SPOTS, REST_SPOTS, REST_AMBIENTS, REST_VIGNETTES, STREET_EVENTS, clamp, distance, angleDiff } = D;
   const Y = window.QuzhouRoadData || window.YulinRoadData;
   const RACE_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 0];
   const ROAD_KINDS = ['hatch', 'coupe', 'sedan', 'van'];
@@ -439,6 +439,144 @@
 
     const eventNpc = factory.person('#c86446', '#333e4c', '#d8a680', false, 3, true);
     eventNpc.root.visible = false;
+    const vignetteNpc = factory.person('#7b2d26', '#28262e', '#dfb08c', false, 2, false);
+    vignetteNpc.root.visible = false;
+    const vignetteProps = (() => {
+      const woodMat = new T.MeshStandardMaterial({ color: '#6d3d24', roughness: .58, metalness: .08 });
+      const clayMat = new T.MeshStandardMaterial({ color: '#a85239', roughness: .50, metalness: .06 });
+      const celadonMat = new T.MeshStandardMaterial({ color: '#d0f0e2', roughness: .24, metalness: .06 });
+      const teaLiquidMat = new T.MeshStandardMaterial({ color: '#8ea84e', roughness: .22, metalness: .08 });
+      const steamMat = new T.MeshBasicMaterial({ color: '#f4f7f2', transparent: true, opacity: .38, depthWrite: false });
+      const teaTray = new T.Group();
+      const trayBase = new T.Mesh(new T.BoxGeometry(.42, .024, .28), woodMat);
+      teaTray.add(trayBase);
+      for (const [bx, bz, bw, bd] of [[0, .135, .42, .016], [0, -.135, .42, .016], [.204, 0, .016, .28], [-.204, 0, .016, .28]]) {
+        const rim = new T.Mesh(new T.BoxGeometry(bw, .034, bd), woodMat);
+        rim.position.set(bx, .014, bz);
+        teaTray.add(rim);
+      }
+      const potBody = new T.Mesh(new T.SphereGeometry(.072, 12, 10), clayMat);
+      potBody.scale.set(1, .84, 1);
+      potBody.position.set(-.09, .068, -.01);
+      const potLid = new T.Mesh(new T.SphereGeometry(.018, 8, 6), clayMat);
+      potLid.position.set(-.09, .132, -.01);
+      const potSpout = new T.Mesh(new T.CylinderGeometry(.010, .017, .085, 6), clayMat);
+      potSpout.position.set(-.025, .078, -.01);
+      potSpout.rotation.z = -.82;
+      teaTray.add(potBody, potLid, potSpout);
+      const cups = [];
+      for (const [cx, cz] of [[.085, .052], [.105, -.055]]) {
+        const cup = new T.Mesh(new T.CylinderGeometry(.038, .026, .062, 10), celadonMat);
+        cup.position.set(cx, .042, cz);
+        const liq = new T.Mesh(new T.CircleGeometry(.031, 10).rotateX(-PI / 2), teaLiquidMat);
+        liq.position.set(cx, .068, cz);
+        teaTray.add(cup, liq);
+        cups.push({ x: cx, z: cz });
+      }
+      const steamWisps = [];
+      for (let i = 0; i < 4; i++) {
+        const wisp = new T.Mesh(new T.SphereGeometry(.026, 7, 6), steamMat.clone());
+        wisp.position.set(i < 2 ? -.08 : .09, .14 + i * .05, i % 2 ? .03 : -.03);
+        teaTray.add(wisp);
+        steamWisps.push({ mesh: wisp, baseX: wisp.position.x, baseZ: wisp.position.z, phase: i * 1.57 });
+      }
+      teaTray.position.set(0, 1.06, .37);
+      teaTray.visible = false;
+      vignetteNpc.root.add(teaTray);
+
+      const bambooMat = new T.MeshStandardMaterial({ color: '#3b2416', roughness: .62, metalness: .06 });
+      const fanPaperMat = new T.MeshStandardMaterial({ color: '#f5e8c8', roughness: .72, metalness: .04, side: T.DoubleSide });
+      const fanTrimMat = new T.MeshStandardMaterial({ color: '#c43e31', roughness: .52, metalness: .10, side: T.DoubleSide });
+      const operaFan = new T.Group();
+      const fanBody = new T.Mesh(new T.CircleGeometry(.30, 14, PI * .15, PI * .70), fanPaperMat);
+      const fanArc = new T.Mesh(new T.RingGeometry(.245, .302, 14, 1, PI * .15, PI * .70), fanTrimMat);
+      fanArc.position.z = .002;
+      operaFan.add(fanBody, fanArc);
+      for (let i = 0; i < 7; i++) {
+        const ang = PI * (.15 + .70 * (i / 6));
+        const rib = new T.Mesh(new T.BoxGeometry(.012, .30, .008), bambooMat);
+        rib.position.set(Math.cos(ang) * .15, Math.sin(ang) * .15, .003);
+        rib.rotation.z = ang - PI / 2;
+        operaFan.add(rib);
+      }
+      operaFan.position.set(-.34, 1.38, .32);
+      operaFan.visible = false;
+      vignetteNpc.root.add(operaFan);
+
+      const operaStage = new T.Group();
+      const post = new T.Mesh(new T.CylinderGeometry(.032, .042, 1.56, 8), woodMat);
+      post.position.y = .78;
+      const foot = new T.Mesh(new T.CylinderGeometry(.18, .22, .06, 10), woodMat);
+      foot.position.y = .03;
+      const arm = new T.Mesh(new T.BoxGeometry(.34, .032, .032), woodMat);
+      arm.position.set(.14, 1.52, 0);
+      const lanternMat = new T.MeshBasicMaterial({ color: '#ff9452', toneMapped: false });
+      const lanternPivot = new T.Group();
+      lanternPivot.position.set(.29, 1.50, 0);
+      const cord = new T.Mesh(new T.CylinderGeometry(.005, .005, .14, 4), bambooMat);
+      cord.position.y = -.07;
+      const lampBody = new T.Mesh(new T.SphereGeometry(.125, 10, 8), lanternMat);
+      lampBody.scale.set(1, 1.24, 1);
+      lampBody.position.y = -.24;
+      const lampTop = new T.Mesh(new T.CylinderGeometry(.075, .075, .028, 8), bambooMat);
+      lampTop.position.y = -.095;
+      const lampBot = new T.Mesh(new T.CylinderGeometry(.065, .065, .026, 8), bambooMat);
+      lampBot.position.y = -.385;
+      const tassel = new T.Mesh(new T.CylinderGeometry(.012, .026, .16, 6), fanTrimMat);
+      tassel.position.y = -.47;
+      lanternPivot.add(cord, lampBody, lampTop, lampBot, tassel);
+      const gongMat = new T.MeshStandardMaterial({ color: '#d8ab4c', roughness: .32, metalness: .72 });
+      const gong = new T.Mesh(new T.CylinderGeometry(.13, .13, .022, 16).rotateX(PI / 2), gongMat);
+      gong.position.set(-.12, 1.18, 0);
+      operaStage.add(post, foot, arm, lanternPivot, gong);
+      operaStage.visible = false;
+      scene.add(operaStage);
+
+      const playerCup = new T.Group();
+      const pCupMesh = new T.Mesh(new T.CylinderGeometry(.038, .026, .062, 10), celadonMat);
+      const pTeaMesh = new T.Mesh(new T.CircleGeometry(.031, 10).rotateX(-PI / 2), teaLiquidMat);
+      pTeaMesh.position.y = .026;
+      const pWisp = new T.Mesh(new T.SphereGeometry(.022, 6, 5), steamMat.clone());
+      pWisp.position.y = .075;
+      playerCup.add(pCupMesh, pTeaMesh, pWisp);
+      playerCup.scale.setScalar(1.22);
+      playerCup.position.set(-.15, .94, .34);
+      playerCup.visible = false;
+      player.root.add(playerCup);
+
+      return { teaTray, steamWisps, operaFan, operaStage, lanternPivot, playerCup, playerCupWisp: pWisp };
+    })();
+    const vigHandL = new T.Vector3();
+    const vigHandR = new T.Vector3();
+    const vigHandTmp = new T.Vector3();
+    function bonePalmWorld(person, side, out) {
+      const limb = person?.limbs?.find(item => item.side === side);
+      if (!limb?.elbow) return false;
+      person.root.updateMatrixWorld(true);
+      out.set(0, -.27, .018);
+      limb.elbow.localToWorld(out);
+      return true;
+    }
+    function syncVignettePropsToHands() {
+      const v = state.rest?.vignette;
+      if (!v?.active || !vignetteNpc.root.visible) return;
+      if (v.kind === 'tea') {
+        if (vignetteProps.teaTray.visible && bonePalmWorld(vignetteNpc, 1, vigHandL) && bonePalmWorld(vignetteNpc, -1, vigHandR)) {
+          vigHandTmp.copy(vigHandL).add(vigHandR).multiplyScalar(.5);
+          vignetteNpc.root.worldToLocal(vigHandTmp);
+          vignetteProps.teaTray.position.set(vigHandTmp.x, vigHandTmp.y + .018, vigHandTmp.z + .048);
+        }
+        if (vignetteProps.playerCup.visible && bonePalmWorld(player, -1, vigHandR)) {
+          player.root.worldToLocal(vigHandR);
+          vignetteProps.playerCup.position.set(vigHandR.x, vigHandR.y + .026, vigHandR.z + .016);
+        }
+      } else if (v.kind === 'opera') {
+        if (vignetteProps.operaFan.visible && bonePalmWorld(vignetteNpc, -1, vigHandR)) {
+          vignetteNpc.root.worldToLocal(vigHandR);
+          vignetteProps.operaFan.position.set(vigHandR.x, vigHandR.y + .012, vigHandR.z + .018);
+        }
+      }
+    }
     const eventBeacon = (() => {
       const group = new T.Group();
       const ringMat = new T.MeshBasicMaterial({
@@ -1111,6 +1249,7 @@
     function exitRestMode(silent = false) {
       const rest = state.rest;
       if (!rest?.active) return false;
+      stopRestVignette(false);
       state.rest = null;
       audio.setAmbient?.('off');
       if (rest.kind === 'bench' && rest.savedPos && !state.vehicle && !state.boat) {
@@ -1184,6 +1323,225 @@
         muted: restAmbientMuted,
       };
     }
+    let lastVignetteBuffAt = -999;
+    function vignetteScriptFor(rest, forcedKind = null) {
+      const map = REST_VIGNETTES || {};
+      if (!forcedKind && rest?.spot?.id && map[rest.spot.id]) return map[rest.spot.id];
+      const area = D.district(player);
+      const inferredKind = forcedKind || rest?.spot?.vignette || ((area === '水亭门古街' || area === '孔氏南宗家庙') ? 'opera' : 'tea');
+      if (rest?.spot?.id && map[rest.spot.id] && map[rest.spot.id].kind === inferredKind) return map[rest.spot.id];
+      return inferredKind === 'opera' ? map.default_opera : map.default_tea;
+    }
+    function clearVignetteProps() {
+      vignetteNpc.root.visible = false;
+      vignetteNpc.restAction = null;
+      vignetteNpc.restActionBow = 0;
+      vignetteNpc.visiblePace = 0;
+      vignetteProps.teaTray.visible = false;
+      vignetteProps.operaFan.visible = false;
+      vignetteProps.operaStage.visible = false;
+      vignetteProps.playerCup.visible = false;
+      player.restAction = null;
+    }
+    function stopRestVignette(completed = false) {
+      const v = state.rest?.vignette;
+      clearVignetteProps();
+      audio.stopVignetteAudio?.();
+      if (!v) return false;
+      if (state.rest) state.rest.vignette = null;
+      if (completed && state.clock - lastVignetteBuffAt >= 30) {
+        lastVignetteBuffAt = state.clock;
+        const isTea = v.kind === 'tea';
+        state.buff = isTea
+          ? { id: 'tea_grace', name: '茶韵生津', icon: '❀', expiresAt: state.clock + 75, walkMult: 1.10, nitroRegenMult: 1.40, driftMult: 1.18, driftCashMult: 1 }
+          : { id: 'opera_grace', name: '梨园余韵', icon: '♫', expiresAt: state.clock + 75, walkMult: 1.10, nitroRegenMult: 1.35, driftMult: 1.25, driftCashMult: 1 };
+        audio.templeChime?.();
+        announce(v.tag, state.buff.name,
+          isTea ? '一盏清茗回甘，75 秒内步履轻盈、氮气回充 ×1.4。' : '一折古戏余韵绕梁，75 秒内漂移积分 ×1.25、步履生风。', 3.4);
+      }
+      return true;
+    }
+    function startRestVignette(forcedKind = null) {
+      const rest = state.rest;
+      if (!rest?.active || rest.kind === 'car' || rest.kind === 'boat') return false;
+      const def = vignetteScriptFor(rest, forcedKind);
+      if (!def) return false;
+      const baseYaw = rest.spot ? rest.spot.yaw : player.yaw;
+      const fx = Math.sin(baseYaw), fz = Math.cos(baseYaw);
+      const rx = Math.cos(baseYaw), rz = -Math.sin(baseYaw);
+      const baseY = world.surfaceHeight(player.x, player.z);
+      const isGoodSpot = (x, z, radius = .36) => {
+        if (world.blockedAt(x, z, radius)) return false;
+        if (x > 330.5 || z > 318.5) return false;
+        return Math.abs(world.surfaceHeight(x, z) - baseY) <= .35;
+      };
+      const fwdDist = def.kind === 'tea' ? 1.56 : 2.14;
+      const latDist = def.kind === 'tea' ? .76 : .86;
+      const candidates = [
+        [1, fwdDist, latDist], [-1, fwdDist, latDist],
+        [1, fwdDist * .86, latDist * .65], [-1, fwdDist * .86, latDist * .65],
+        [1, 1.36, .32], [-1, 1.36, .32],
+      ];
+      let sideSign = 1;
+      let targetPt = null;
+      for (const [sign, fwd, lat] of candidates) {
+        const cx = player.x + fx * fwd + rx * sign * lat;
+        const cz = player.z + fz * fwd + rz * sign * lat;
+        if (isGoodSpot(cx, cz)) {
+          sideSign = sign;
+          targetPt = { x: cx, z: cz };
+          break;
+        }
+      }
+      if (!targetPt) {
+        targetPt = { x: player.x + fx * 1.28, z: player.z + fz * 1.28 };
+      }
+      const camBack = def.kind === 'tea' ? 2.75 : 3.25;
+      const camLat = def.kind === 'tea' ? .85 : .95;
+      const camAngle = def.kind === 'tea' ? 1.24 : 1.12;
+      const camRayX = rest.spot ? rest.spot.exitX : player.x;
+      const camRayZ = rest.spot ? rest.spot.exitZ : player.z;
+      const camRayY = baseY + 1.52;
+      const scoreCamSide = sign => {
+        const cyaw = baseYaw + sign * camAngle;
+        const cfx = Math.sin(cyaw), cfz = Math.cos(cyaw);
+        const dx = player.x - cfx * camBack - cfz * (sign * camLat);
+        const dz = player.z - cfz * camBack + cfx * (sign * camLat);
+        let score = world.clearFraction(camRayX, camRayY, camRayZ, dx, baseY + 1.54, dz, .36);
+        const camGround = world.surfaceHeight(dx, dz);
+        const midGround = world.surfaceHeight((dx + player.x) * .5, (dz + player.z) * .5);
+        if (camGround > baseY + .35 || midGround > baseY + .35) score -= 1.2;
+        if (dx > 330.5 || dz > 318.5) score -= .6;
+        return score;
+      };
+      const camScoreA = scoreCamSide(sideSign);
+      const camScoreB = scoreCamSide(-sideSign);
+      const camSide = camScoreB > camScoreA + .08 ? -sideSign : sideSign;
+      let startPt = targetPt;
+      if (def.kind === 'tea') {
+        const farCand = { x: targetPt.x + rx * sideSign * 1.15 + fx * .55, z: targetPt.z + rz * sideSign * 1.15 + fz * .55 };
+        const midCand = { x: targetPt.x + rx * sideSign * .65 + fx * .35, z: targetPt.z + rz * sideSign * .65 + fz * .35 };
+        const fwdCand = { x: targetPt.x + fx * .52, z: targetPt.z + fz * .52 };
+        startPt = isGoodSpot(farCand.x, farCand.z) ? farCand : isGoodSpot(midCand.x, midCand.z) ? midCand : isGoodSpot(fwdCand.x, fwdCand.z) ? fwdCand : targetPt;
+      }
+      vignetteNpc.x = startPt.x;
+      vignetteNpc.z = startPt.z;
+      vignetteNpc.elevation = world.surfaceHeight(startPt.x, startPt.z);
+      vignetteNpc.yaw = heading(startPt, player);
+      vignetteNpc.restAction = def.kind === 'tea' ? 'teaServe' : 'operaPerform';
+      vignetteNpc.restActionStart = state.clock;
+      vignetteNpc.restActionBow = 0;
+      vignetteNpc.visiblePace = def.kind === 'tea' ? .75 : 0;
+      vignetteNpc.root.visible = true;
+      vignetteProps.teaTray.visible = def.kind === 'tea';
+      vignetteProps.operaFan.visible = def.kind === 'opera';
+      vignetteProps.playerCup.visible = false;
+      if (def.kind === 'opera') {
+        let sx = targetPt.x + rx * sideSign * .92 + fx * .28;
+        let sz = targetPt.z + rz * sideSign * .92 + fz * .28;
+        const stageCands = [
+          [sideSign * .92, .28], [-sideSign * .92, .28], [sideSign * .78, .08], [-sideSign * .78, .08],
+        ];
+        for (const [slat, sfwd] of stageCands) {
+          const cx = targetPt.x + rx * slat + fx * sfwd;
+          const cz = targetPt.z + rz * slat + fz * sfwd;
+          if (isGoodSpot(cx, cz, .28)) { sx = cx; sz = cz; break; }
+        }
+        vignetteProps.operaStage.position.set(sx, world.surfaceHeight(sx, sz) - .02, sz);
+        vignetteProps.operaStage.rotation.y = heading({ x: sx, z: sz }, player);
+        vignetteProps.operaStage.visible = true;
+      } else {
+        vignetteProps.operaStage.visible = false;
+      }
+      player.restAction = def.kind === 'opera' ? 'operaListen' : null;
+      player.restActionStart = state.clock;
+      player.restActionSide = sideSign;
+      rest.vignette = {
+        active: true, kind: def.kind, tag: def.tag, title: def.title, speaker: def.speaker,
+        lines: def.lines, lineIndex: 0, startedAt: state.clock,
+        duration: def.kind === 'tea' ? 13.5 : 14.5,
+        sideSign, camSide, startX: startPt.x, startZ: startPt.z, targetX: targetPt.x, targetZ: targetPt.z,
+      };
+      state.lastLook = state.clock - 10;
+      audio.start();
+      audio.startVignetteAudio?.(def.kind);
+      return true;
+    }
+    function toggleRestVignette(forcedKind = null) {
+      const rest = state.rest;
+      if (!rest?.active || rest.kind === 'car' || rest.kind === 'boat') return false;
+      if (rest.vignette?.active) {
+        if (forcedKind && rest.vignette.kind !== forcedKind) {
+          stopRestVignette(false);
+          return startRestVignette(forcedKind);
+        }
+        stopRestVignette(false);
+        audio.note();
+        return false;
+      }
+      return startRestVignette(forcedKind);
+    }
+    function stepRestVignette(dt) {
+      const rest = state.rest;
+      const v = rest?.vignette;
+      if (!v?.active) return;
+      const elapsed = state.clock - v.startedAt;
+      if (elapsed >= v.duration) {
+        stopRestVignette(true);
+        return;
+      }
+      v.lineIndex = elapsed >= v.duration * .48 && v.lines.length > 1 ? 1 : 0;
+      if (v.kind === 'tea') {
+        const walkT = clamp(elapsed / 2.2, 0, 1);
+        const ease = walkT * walkT * (3 - 2 * walkT);
+        vignetteNpc.x = mix(v.startX, v.targetX, ease);
+        vignetteNpc.z = mix(v.startZ, v.targetZ, ease);
+        vignetteNpc.elevation = world.surfaceHeight(vignetteNpc.x, vignetteNpc.z);
+        vignetteNpc.yaw = heading(vignetteNpc, player);
+        vignetteNpc.visiblePace = walkT < .98 ? .78 : 0;
+        const bowPhase = elapsed > 2.2 && elapsed < 7.2 ? Math.sin(clamp((elapsed - 2.2) / 5.0, 0, 1) * PI) : 0;
+        vignetteNpc.restActionBow = bowPhase;
+        vignetteProps.teaTray.position.set(0, 1.05 - .08 * bowPhase, .37 + .07 * bowPhase);
+        vignetteProps.teaTray.rotation.x = .08 * bowPhase;
+        for (const w of vignetteProps.steamWisps) {
+          const cyc = (state.clock * .65 + w.phase) % 1;
+          w.mesh.position.set(w.baseX + Math.sin(state.clock * 1.8 + w.phase) * .025, .13 + cyc * .24, w.baseZ);
+          w.mesh.scale.setScalar(.6 + cyc * 1.25);
+          w.mesh.material.opacity = .36 * Math.sin(cyc * PI);
+        }
+        if (elapsed >= 2.8) {
+          if (player.restAction !== 'teaSip') {
+            player.restAction = 'teaSip';
+            player.restActionStart = state.clock;
+          }
+          const sipWave = Math.max(0, Math.sin((state.clock - player.restActionStart) * 1.15 - .35));
+          const benchSit = (player.sitHeight ?? 0) > .25;
+          const cupBaseY = benchSit ? (player.sitHeight + .45) : .64;
+          vignetteProps.playerCup.visible = true;
+          vignetteProps.playerCup.position.set(-.14 + .06 * sipWave, cupBaseY + .17 * sipWave, .34 - .08 * sipWave);
+          vignetteProps.playerCup.rotation.x = -.22 * sipWave;
+          const pCyc = (state.clock * .82) % 1;
+          vignetteProps.playerCupWisp.position.y = .065 + pCyc * .16;
+          vignetteProps.playerCupWisp.scale.setScalar(.55 + pCyc * 1.1);
+          vignetteProps.playerCupWisp.material.opacity = .32 * Math.sin(pCyc * PI);
+        }
+      } else if (v.kind === 'opera') {
+        vignetteNpc.x = v.targetX;
+        vignetteNpc.z = v.targetZ;
+        vignetteNpc.elevation = world.surfaceHeight(v.targetX, v.targetZ);
+        vignetteNpc.yaw = heading(vignetteNpc, player);
+        vignetteNpc.visiblePace = 0;
+        const sweep = Math.sin(elapsed * 2.05);
+        const sway = Math.sin(elapsed * 1.35);
+        vignetteProps.operaFan.position.set(-.34 + .12 * sway, 1.38 + .14 * sweep, .33 + .09 * Math.cos(elapsed * 2.05));
+        vignetteProps.operaFan.rotation.set(.18 * sweep, .38 * sway, -.26 - .42 * sweep);
+        vignetteProps.lanternPivot.rotation.z = .08 * Math.sin(state.clock * 1.9);
+        vignetteProps.lanternPivot.rotation.x = .05 * Math.cos(state.clock * 1.5);
+        if (Math.random() < dt * 2.4) {
+          factory.particlesAt(vignetteProps.operaStage.position.x, vignetteProps.operaStage.position.y + 1.28, vignetteProps.operaStage.position.z, 'spark', 1);
+        }
+      }
+    }
     function resolveRestSpot(spotOrId) {
       if (!spotOrId) return null;
       if (typeof spotOrId === 'string') return REST_SPOTS?.find(item => item.id === spotOrId) || null;
@@ -1243,6 +1601,7 @@
     function stepRest(dt, keys) {
       const rest = state.rest;
       if (!rest?.active) return;
+      stepRestVignette(dt);
       const pan = Number(keys.has('ArrowLeft')) - Number(keys.has('ArrowRight'));
       if (pan) {
         rest.orbitOffset = angleDiff(rest.orbitOffset + pan * dt * 1.45, 0);
@@ -3179,6 +3538,7 @@
     let alternateView = 0, hoodView = 0;
     let fromAlternate = 0, fromHood = 0;
     let restCamBlend = 0;
+    let vignetteCamBlend = 0;
     let previousCameraMode = -1, blendTime = 1, blendDuration = .32;
     let cameraReach = 1, cameraGround = 0, orbitSubject = null;
     const mountEye = new T.Vector3(), mountAim = new T.Vector3(), mountOffset = new T.Vector3();
@@ -3205,6 +3565,8 @@
       hoodView = mix(fromHood, Number(mode === 2), blend);
       const restActive = Boolean(state.rest?.active);
       restCamBlend = snap || progress.reduceMotion ? Number(restActive) : smooth(restCamBlend, Number(restActive), 4.2, dt);
+      const vigActive = Boolean(restActive && state.rest.vignette?.active);
+      vignetteCamBlend = snap || progress.reduceMotion ? Number(vigActive) : smooth(vignetteCamBlend, Number(vigActive), 2.8, dt);
       const ground = boat ? 0 : world.surfaceHeight(p.x, p.z) - .023;
       cameraGround = snap ? ground : smooth(cameraGround, ground, 15, dt);
       if (driving && !restActive) {
@@ -3233,6 +3595,15 @@
         const sway = Math.sin((state.clock - state.rest.startedAt) * .22) * .22 * swayFactor;
         const baseYaw = state.rest.spot ? state.rest.spot.yaw : (driving ? driving.yaw : player.yaw);
         yaw = baseYaw + (state.rest.orbitOffset || 0) + sway;
+        if (vignetteCamBlend > .003 && state.rest.vignette) {
+          const v = state.rest.vignette;
+          const userManual = swayAge < 3.4;
+          if (!userManual) {
+            const drift = progress.reduceMotion ? 0 : Math.sin((state.clock - v.startedAt) * .26) * .08;
+            const targetYaw = baseYaw + (v.camSide || v.sideSign || 1) * (v.kind === 'tea' ? 1.24 : 1.12) + drift;
+            yaw = angleDiff(yaw, 0) + angleDiff(targetYaw, yaw) * vignetteCamBlend;
+          }
+        }
       }
       const fx = Math.sin(yaw), fz = Math.cos(yaw);
       const speed = clamp(Math.abs(driving?.speed ?? 0) / (boat ? 23 : 40), 0, 1);
@@ -3281,6 +3652,16 @@
         nose = mix(nose, 0, restCamBlend);
         pitchArm = mix(pitchArm, 1, restCamBlend);
       }
+      if (vignetteCamBlend > .003 && state.rest?.vignette) {
+        const v = state.rest.vignette;
+        const isTea = v.kind === 'tea';
+        back = mix(back, isTea ? 2.75 : 3.25, vignetteCamBlend);
+        height = mix(height, isTea ? 1.48 : 1.60, vignetteCamBlend);
+        side = mix(side, (v.camSide || v.sideSign || 1) * (isTea ? .85 : .95), vignetteCamBlend);
+        lead = mix(lead, isTea ? 2.2 : 2.8, vignetteCamBlend);
+        aimHeight = mix(aimHeight, isTea ? 1.04 : 1.16, vignetteCamBlend);
+        fov = mix(fov, isTea ? 42 : 45, vignetteCamBlend);
+      }
       const pivotHeight = boat ? 1.46 : 1.25;
       cameraPivot.set(p.x, ground + pivotHeight, p.z);
       if (snap || progress.reduceMotion) mountPhase = 1;
@@ -3296,7 +3677,7 @@
       cameraSubject = p;
       mountPhase = Math.min(1, mountPhase + dt / .28);
       const mountMix = mountPhase * mountPhase * (3 - 2 * mountPhase);
-      const armPitch = state.viewPitch * pitchArm;
+      const armPitch = state.viewPitch * pitchArm * (1 - vignetteCamBlend * .85);
       const armCos = Math.cos(armPitch), armSin = Math.sin(armPitch);
       const armBack = back * armCos + (height - pivotHeight) * armSin;
       desired.set(p.x - fx * armBack - fz * side, cameraGround + pivotHeight + (height - pivotHeight) * armCos - back * armSin,
@@ -3323,6 +3704,12 @@
       cameraReach = snap || reach <= cameraReach ? reach : smooth(cameraReach, reach, 12, dt);
       camera.position.copy(cameraPivot).lerp(desired, cameraReach);
       focus.set(p.x + fx * lead, cameraGround + aimHeight + Math.tan(state.viewPitch) * lead, p.z + fz * lead);
+      if (vignetteCamBlend > .003 && state.rest?.vignette?.active && vignetteNpc.root.visible) {
+        const vx = mix(p.x, vignetteNpc.x, .48);
+        const vz = mix(p.z, vignetteNpc.z, .48);
+        const vy = cameraGround + (state.rest.vignette.kind === 'tea' ? 1.04 : 1.16);
+        focus.set(mix(focus.x, vx, vignetteCamBlend), mix(focus.y, vy, vignetteCamBlend), mix(focus.z, vz, vignetteCamBlend));
+      }
       if (mountPhase < 1) {
         mountOffset.copy(mountAim).applyAxisAngle(mountUp, yaw - mountYaw);
         mountOffset.y += Math.tan(state.viewPitch - mountPitch) * Math.hypot(mountOffset.x, mountOffset.z);
@@ -3557,12 +3944,17 @@
       eventNpc.root.visible = showEvNpc && (eventNpc.x - view.x) ** 2 + (eventNpc.z - view.z) ** 2 < pedRangeSq;
       eventNpc.root.matrixWorldAutoUpdate = eventNpc.root.visible;
       if (eventNpc.root.visible) factory.posePerson(eventNpc, dt, 0, false, false, eye, pedEnv);
+      const showVigNpc = Boolean(state.rest?.active && state.rest.vignette?.active);
+      vignetteNpc.root.visible = showVigNpc;
+      vignetteNpc.root.matrixWorldAutoUpdate = showVigNpc;
+      if (showVigNpc) factory.posePerson(vignetteNpc, dt, vignetteNpc.visiblePace ?? 0, false, false, eye, pedEnv);
       if (state.vehicle?.concept) D.poseConceptDriver(player, state.vehicle);
       else if (player.root.parent !== scene) D.leaveConceptSeat(player, scene);
       if (!state.vehicle && !state.boat) {
         player.root.visible = !cameraInsideActor;
         factory.posePerson(player, dt, player.walking ?? 0, false, false, null, pedEnv);
       }
+      if (showVigNpc) syncVignettePropsToHands();
       marine.render(dt, state, false, true);
       drawMarkers();
       factory.updateParticles(dt);
@@ -3696,12 +4088,17 @@
       eventNpc.root.visible = showPhotoEvNpc && (eventNpc.x - photo.targetX) ** 2 + (eventNpc.z - photo.targetZ) ** 2 < pedRangeSq;
       eventNpc.root.matrixWorldAutoUpdate = eventNpc.root.visible;
       if (eventNpc.root.visible) factory.posePerson(eventNpc, 0, 0, false, false, camera.position, pedEnv);
+      const showPhotoVig = Boolean(state.rest?.active && state.rest.vignette?.active);
+      vignetteNpc.root.visible = showPhotoVig;
+      vignetteNpc.root.matrixWorldAutoUpdate = showPhotoVig;
+      if (showPhotoVig) factory.posePerson(vignetteNpc, 0, 0, false, false, camera.position, pedEnv);
       if (state.vehicle?.concept) D.poseConceptDriver(player, state.vehicle);
       else if (player.root.parent !== scene) D.leaveConceptSeat(player, scene);
       if (!state.vehicle && !state.boat) {
         player.root.visible = true;
         factory.posePerson(player, 0, player.walking ?? 0, false, false, null, pedEnv);
       }
+      if (showPhotoVig) syncVignettePropsToHands();
       marine.render(0, state, false, true);
       renderer.shadowMap.needsUpdate = world.sun.castShadow && world.sun.shadow.needsUpdate;
       const surface = state.boat || photo.targetX > 331 || photo.targetZ > 319 ? 'water' : 'road';
@@ -4036,6 +4433,8 @@
       honkHorn, toggleVehicleLights, interactStreetSpot, releaseSkyLantern, releasedLanterns, activeBuff, STREET_SPOTS,
       REST_SPOTS, REST_AMBIENTS, enterRestMode, exitRestMode, toggleRestMode, setRestTimeScale, cycleRestTimeScale, toggleRestUi,
       setRestAmbient, cycleRestAmbient, ambientStatus, fastTravelToRestSpot, setRestSpotTarget,
+      REST_VIGNETTES, startRestVignette, stopRestVignette, toggleRestVignette, vignetteNpc,
+      vignetteAudioStatus: () => audio.getVignetteAudio?.() ?? '',
       STREET_EVENTS, spawnStreetEvent, cancelStreetEvent, eventNpc, eventBeacon,
       cashText };
   }
