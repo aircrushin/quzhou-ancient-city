@@ -108,7 +108,7 @@
       car.distant.material = mechanical;
       const lod = car.distant.parent;
       const farLevel = lod.levels.find(level => level.object === car.distant);
-      farLevel.distance = matchMedia('(pointer:coarse)').matches ? 21 : 30;
+      farLevel.distance = matchMedia('(pointer:coarse)').matches ? 96 : 150;
       function useDetail(full) {
         shell.geometry = full ? parts.paint : parts.cruisePaint;
         trim.geometry = full ? parts.trim : parts.cruiseTrim;

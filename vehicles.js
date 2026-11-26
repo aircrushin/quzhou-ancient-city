@@ -1407,7 +1407,7 @@
       shell.receiveShadow = trim.receiveShadow = windows.receiveShadow = true;
       shell.castShadow = true;
       const distant = new T.Mesh(geometry.distant, material);
-      lod.addLevel(distant, model.kind === 'bus' ? 54 : 38, .12);
+      lod.addLevel(distant, model.kind === 'bus' ? 170 : 130, .1);
       if (hero) mesh(near, contactPatches, shadowMat);
       else if (model.kind === 'bus') mesh(near, decal, shadowMat, 0, .011, 0, 3.05, 1, 8.15);
       else if (model.kind === 'compact') mesh(near, decal, shadowMat, 0, .011, 0, 2.48, 1, 4.25);
@@ -3004,7 +3004,7 @@
           const lod = new T.LOD();
           lod.addLevel(detail, 0);
           distant = new T.Mesh(cachedEntry.distant, fabric);
-          lod.addLevel(distant, 44, .15);
+          lod.addLevel(distant, 86, .12);
           root.add(lod);
         }
         const shadow = mesh(root, decal, pedestrianShadow, 0, .009, 0, .84, 1, .90);
@@ -3132,7 +3132,7 @@
           if (cacheKey) pedestrianGeoCache.set(cacheKey, { detail: detail.geometry, distant: distantGeo });
         }
         distant = new T.Mesh(distantGeo, fabric);
-        lod.addLevel(distant, 26, .14);
+        lod.addLevel(distant, 72, .12);
         root.add(lod);
       }
       const shadow = mesh(root, decal, pedestrianShadow, 0, .009, 0, .92, 1, .97);
@@ -3265,9 +3265,8 @@
       if (person.distant) {
         person.distant.position.y = .024 * Math.sin(phase * 2) * move;
         person.distant.rotation.z = .047 * Math.sin(phase) * move;
-        // The 26 m LOD already displays a rigid silhouette. Keep its gait and
-        // elevation live and prepare the detailed joints before the switch back.
-        if (eye && !reaction && !person.streetPose && (person.x - eye.x) ** 2 + (person.z - eye.z) ** 2 > 48 ** 2) return;
+        // Beyond the detailed rig, only the silhouette needs a light gait.
+        if (eye && !reaction && !person.streetPose && (person.x - eye.x) ** 2 + (person.z - eye.z) ** 2 > 100 ** 2) return;
       }
       person.breath = (person.breath + safeDt * lerp(1.48 + .55 * run, .96, sit)) % (Math.PI * 2);
       const inhale = Math.sin(person.breath);

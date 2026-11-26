@@ -2196,7 +2196,7 @@
       const range = Math.ceil(streetDistance * Math.max(1, camera.aspect / 2.4));
       camera.updateMatrixWorld();
       streetFrustum.setFromProjectionMatrix(streetProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-      const trimRange = surfaceDetail.value > .5 ? 67 : 37;
+      const trimRange = surfaceDetail.value > .5 ? 168 : 108;
       for (const { mesh, matrices, bounds, visibleIndices, mainCount, ink, paints } of streetDistance ? streetBatches : closeStreetBatches) {
         const upload = mesh.instanceMatrix;
         let count = 0, firstDirty = visibleIndices.length, lastDirty = -1;
