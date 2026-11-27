@@ -1,0 +1,97 @@
+/* ============================================================
+   Mobile UI Cleanup — 触屏界面精简层
+   仅在 .touch-enabled 下生效；保留全部功能，只做视觉降噪与
+   信息层级整理。加载顺序须在 interface.css 之后。
+   ============================================================ */
+
+/* ---------- 1. 环视提示：紧凑胶囊，去掉键盘无关的"调整"入口 ---------- */
+.touch-enabled #look-hint {
+  max-width: min(268px, 64vw);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+}
+.touch-enabled #look-hint-adjust { display: none !important; }
+.touch-enabled #look-hint > div { padding: .3rem .78rem; }
+.touch-enabled #look-hint-dismiss { min-width: 36px; min-height: 36px; font-size: 18px; }
+
+/* ---------- 2. 电台对话框：更轻、更窄，减少遮挡 ---------- */
+.touch-enabled .hud-notices #radio-message {
+  max-width: min(330px, 66vw);
+  padding-right: 10px;
+}
+.touch-enabled #radio-message .radio-portrait {
+  width: clamp(30px, 9vw, 42px);
+  min-height: 38px;
+}
+
+/* ---------- 3. 顶部信息条：略收紧 ---------- */
+.touch-enabled .hud .explore-strip { font-size: .68rem; }
+.touch-enabled .hud .district { gap: 6px; }
+
+/* ---------- 4. 触屏按钮：统一圆角与描边，降低视觉噪音 ---------- */
+.touch-enabled .hud .touch button::before {
+  border-radius: 12px;
+  border-color: rgba(240, 232, 210, .44);
+  background: rgba(16, 28, 30, .66);
+}
+
+/* ---------- 5. 快捷栏：紧凑、留出一个"更多"位 ---------- */
+.touch-enabled .hud .touch-quick-bar {
+  position: relative;
+  gap: 5px;
+  pointer-events: none;
+}
+.touch-enabled .hud .touch-quick-bar button {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+}
+
+/* ---------- 6. 低频键抽屉（由 mobile-ui.js 注入） ---------- */
+.touch-enabled .touch-quick-drawer {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: none;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(14, 26, 26, .92);
+  border: 1px solid rgba(232, 222, 196, .38);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .32);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+.touch-enabled.touch-more-open .touch-quick-drawer { display: flex; }
+
+/* "更多"按钮 */
+.touch-enabled .hud .touch-quick-bar .touch-more {
+  --face: #204038d9;
+  --rim: #f0d9a6b8;
+  --mark: #f6e6c2;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  pointer-events: auto;
+}
+.touch-enabled .hud .touch-quick-bar .touch-more::before { border-radius: 12px; }
+.touch-enabled .hud .touch-quick-bar .touch-more svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  stroke: none;
+}
+.touch-enabled.touch-more-open .hud .touch-quick-bar .touch-more {
+  --face: #7a5233ee;
+  --mark: #fff1d8;
+}
+
+/* 收起时隐藏抽屉内按钮；展开时按按钮自身 hidden 状态显示 */
+.touch-enabled:not(.touch-more-open) .touch-quick-drawer > button { display: none !important; }
+
+/* ---------- 7. 触屏下的热区与可访问性 ---------- */
+.touch-enabled .hud .touch button:focus-visible {
+  outline: 2px solid #ffd9a0;
+  outline-offset: 1px;
+}
