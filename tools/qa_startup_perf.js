@@ -8,8 +8,10 @@ const { chromium } = require(path.join(os.homedir(), 'AppData/Roaming/npm/node_m
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
+  page.on('console', m => { const t = m.text(); if (t.startsWith('[PERF]')) console.log(t); });
 
   await page.addInitScript(() => {
+    window.__QA_PERF__ = true;
     let wrapped = false;
     const poll = setInterval(() => {
       if (!wrapped && window.Tideline && typeof window.Tideline.createSimulation === 'function') {

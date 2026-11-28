@@ -200,6 +200,11 @@
     };
   }
 
+  function roadScreenReflect(modeName, state, compact) {
+    if (compact || modeName !== 'ultra') return false;
+    return (state.night ?? 0) > .42 || (state.rain ?? 0) > .22 || (state.wetness ?? 0) > .48;
+  }
+
   function makeLook(renderer, scene, options) {
     const rain = rainField(scene, options.compact, options.shelters ?? []);
     const atmo = atmosphereField(scene, options.compact, options.shelters ?? []);
@@ -229,6 +234,19 @@
     const aoTarget = () => new T.WebGLRenderTarget(2, 2, { depthBuffer: false, stencilBuffer: false });
     const contact = aoTarget();
     const softContact = aoTarget();
+    const contactPing = aoTarget();
+    const screenReflect = options.screenReflect || null;
+    const prevColor = linearTarget();
+    prevColor.texture.generateMipmaps = true;
+    prevColor.texture.minFilter = T.LinearMipmapLinearFilter;
+    prevColor.texture.magFilter = T.LinearFilter;
+    prevColor.texture.name = 'Quzhou previous color';
+    const prevDepth = linearTarget();
+    prevDepth.texture.name = 'Quzhou previous depth';
+    if (screenReflect) {
+      screenReflect.color.value = prevColor.texture;
+      screenReflect.depth.value = prevDepth.texture;
+    }
     const size = new T.Vector2();
     const sunProj = new T.Vector3();
     const camForward = new T.Vector3();
@@ -330,19 +348,19 @@
       '  vec3 dy=(abs(bottom-safeDepth)<abs(top-safeDepth)) ? point-pointAt(at-sy,bottom) : pointAt(at+sy,top)-point;',
       '  vec3 crossN=cross(dx,dy);',
       '  vec3 normal=crossN*inversesqrt(max(dot(crossN,crossN),1e-8));',
-      '  float radius=1.05+smoothstep(4.,42.,safeDepth)*.55;',
-      '  vec2 reach=min(vec2(radius)/(max(safeDepth,.1)*rayScale*2.),pixelStep*28.)*valid;',
+      '  float radius=1.7+smoothstep(3.,34.,safeDepth)*1.15;',
+      '  vec2 reach=min(vec2(radius)/(max(safeDepth,.1)*rayScale*2.),pixelStep*48.)*valid;',
       '  float jitter=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));',
       '  float baseAng=jitter*3.14159265;',
       '  float occ=0.0;',
-      '  for(int i=0;i<6;i++){',
-      '    float ang=baseAng+float(i)*1.04719755;',
+      '  for(int i=0;i<10;i++){',
+      '    float ang=baseAng+float(i)*0.62831853;',
       '    vec2 dir=vec2(cos(ang),sin(ang))*reach;',
-      '    float r1=.38+.24*fract(jitter*3.7+float(i)*.41);',
-      '    float r2=.76+.22*fract(jitter*5.3+float(i)*.29);',
+      '    float r1=.34+.22*fract(jitter*3.7+float(i)*.41);',
+      '    float r2=.72+.24*fract(jitter*5.3+float(i)*.29);',
       '    occ+=nearby(at+dir*r1,point,normal,radius)+nearby(at-dir*r2,point,normal,radius);',
       '  }',
-      '  float mask=mix(1.0, clamp(1.0-occ*(.96/12.)*(1.-smoothstep(86.,148.,safeDepth)), .16, 1.0), valid);',
+      '  float mask=mix(1.0, clamp(1.0-occ*(1.5/20.)*(1.-smoothstep(62.,132.,safeDepth)), .11, 1.0), valid);',
       '  gl_FragColor=vec4(vec3(mask),1.);',
       '}',
     ]);
@@ -362,9 +380,17 @@
       '  gl_FragColor=vec4(vec3(result.x/result.y),1.);',
       '}',
     ]);
+    const copyColor = pass({ image: { value: color.texture } }, [
+      'uniform sampler2D image;',
+      'void main(){ gl_FragColor = vec4(texture2D(image,uvScreen).rgb,1.0); }',
+    ]);
+    const copyDepth = pass({ image: { value: color.depthTexture } }, [
+      'uniform sampler2D image;',
+      'void main(){ gl_FragColor = vec4(texture2D(image,uvScreen).r,0.0,0.0,1.0); }',
+    ]);
     const final = pass({
       image: { value: color.texture }, lights: { value: glow.texture }, wideLights: { value: wideGlow.texture },
-      shafts: { value: shafts.texture }, shadows: { value: softContact.texture },
+      shafts: { value: shafts.texture }, shadows: { value: contactPing.texture },
       wet: { value: 0 }, night: { value: 0 }, dusk: { value: 0 }, mist: { value: 0 }, ultra: { value: 1 }, shaftGain: { value: 0 }, pixel: { value: new T.Vector2() },
     }, [
       'uniform sampler2D image,lights,wideLights,shafts,shadows;',
@@ -404,7 +430,8 @@
       '  vec3 c = edgeSample(uvScreen);',
       '  float exposure = brightness(c);',
       '  float contact=texture2D(shadows,uvScreen).r;',
-      '  c *= mix(contact,1.0,.38*smoothstep(.35,.92,exposure));',
+      '  float aoLift=mix(.16,.06,ultra)*smoothstep(.66,.98,exposure);',
+      '  c *= mix(contact,1.0,aoLift);',
       '  vec3 nearBloom = texture2D(lights,uvScreen).rgb;',
       '  vec3 farBloom = texture2D(wideLights,uvScreen).rgb;',
       '  float bloomGain = .13 + .20 * night + .075 * wet + .095 * mist + .055 * dusk;',
@@ -439,15 +466,40 @@
       const mode = options.mode();
       const isUltra = mode === 'ultra';
       if (mode !== 'high' && !isUltra) {
+        if (screenReflect) {
+          screenReflect.strength.value = 0;
+          screenReflect.ready.value = 0;
+        }
         renderer.render(scene, camera);
         return;
       }
       renderer.getDrawingBufferSize(size);
       if (size.x !== color.width || size.y !== color.height) {
         color.setSize(size.x, size.y);
+        if (screenReflect) screenReflect.ready.value = 0;
+      }
+      if (screenReflect) {
+        screenReflect.strength.value = roadScreenReflect(mode, state, options.compact) ? 1 : 0;
+        if (!isUltra) screenReflect.ready.value = 0;
       }
       renderer.setRenderTarget(color);
       renderer.render(scene, camera);
+      if (isUltra && screenReflect) {
+        const historyW = Math.max(2, size.x >> 1);
+        const historyH = Math.max(2, size.y >> 1);
+        if (prevColor.width !== historyW || prevColor.height !== historyH) {
+          prevColor.setSize(historyW, historyH);
+          prevDepth.setSize(historyW, historyH);
+        }
+        copyColor.uniforms.image.value = color.texture;
+        draw(copyColor, prevColor);
+        copyDepth.uniforms.image.value = color.depthTexture;
+        draw(copyDepth, prevDepth);
+        screenReflect.viewProj.value.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        screenReflect.near.value = camera.near;
+        screenReflect.far.value = camera.far;
+        screenReflect.ready.value = 1;
+      }
       const w = Math.max(2, Math.floor(size.x / 4));
       const h = Math.max(2, Math.floor(size.y / 4));
       const w2 = Math.max(2, Math.floor(size.x / 8));
@@ -459,6 +511,7 @@
         scratch.setSize(w, h);
         contact.setSize(contactWidth, contactHeight);
         softContact.setSize(contact.width, contact.height);
+        contactPing.setSize(contact.width, contact.height);
       }
       if (isUltra && (w2 !== wideGlow.width || h2 !== wideGlow.height || w !== shafts.width || h !== shafts.height)) {
         wideGlow.setSize(w2, h2);
@@ -469,7 +522,10 @@
       depthUniforms.pixelStep.value.set(1 / contact.width, 1 / contact.height);
       occlusion.uniforms.rayScale.value.set(1 / camera.projectionMatrix.elements[0], 1 / camera.projectionMatrix.elements[5]);
       draw(occlusion, contact);
+      spread.uniforms.image.value = contact.texture;
       draw(spread, softContact);
+      spread.uniforms.image.value = softContact.texture;
+      draw(spread, contactPing);
       threshold.uniforms.pixel.value.set(1 / color.width, 1 / color.height);
       draw(threshold, glow);
       blur.uniforms.image.value = glow.texture;
@@ -516,7 +572,7 @@
       draw(final, null);
     }
     renderPass.warmup = () => {
-      for (const m of [threshold, blur, occlusion, spread, sunShaftPass, final]) {
+      for (const m of [threshold, blur, occlusion, spread, sunShaftPass, copyColor, copyDepth, final]) {
         quad.material = m;
         renderer.compile(screen, screenCamera);
       }
@@ -719,5 +775,5 @@
     return { start, tick };
   }
 
-  Object.assign(D, { makeLook, makeRainAudio });
+  Object.assign(D, { makeLook, makeRainAudio, roadScreenReflect });
 })();

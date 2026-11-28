@@ -248,8 +248,9 @@
       } else {
         scene.environment = null;
       }
+      const roadSsr = surfaceKind === 'road' && D.roadScreenReflect(display, state, compact);
       const eligible = high && surfaceKind && !state.sheltered && camera.position.y > .1 &&
-        (surfaceKind === 'water' || state.wetness > .17);
+        (surfaceKind === 'water' || (state.wetness > .17 && !roadSsr));
       reflection.strength.value = 0;
       reflection.waterStrength.value = 0;
       if (!eligible) {

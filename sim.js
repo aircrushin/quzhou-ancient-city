@@ -144,7 +144,7 @@
     const factory = D.makeFactory(scene, world.surfaceHeight, world.skyUniforms);
     const marine = D.makeMarine(scene, world);
     const prepareReflections = D.makeStreetEffects(renderer, scene, world, displayMode, compact);
-    const renderScene = D.makeLook(renderer, scene, { compact, mode: displayMode, shelters: world.shelters, skyUniforms: world.skyUniforms });
+    const renderScene = D.makeLook(renderer, scene, { compact, mode: displayMode, shelters: world.shelters, skyUniforms: world.skyUniforms, screenReflect: world.screenReflect });
     camera.layers.enable(1);
     const carList = [];
     const pedestrians = [];
@@ -4168,19 +4168,22 @@
       coupe?.sprungBody.traverse(include);
       coupe?.wheels[0].hub.traverse(include);
       scene.add(samples);
+      const DR0 = performance.now();
       try { render(0); } finally { scene.remove(samples); }
-      // A submitted first frame can still leave the GPU uploading the visible
-      // models. Keep painting the loading screen while that frame completes.
-      if (!gl.fenceSync) return;
-      const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-      if (!fence) return;
-      try {
-        gl.flush();
-        const until = performance.now() + 1200;
-        while (performance.now() < until && gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED) await nextFrame();
-      } finally { gl.deleteSync(fence); }
+      perfMark('  drawOpening render', DR0);
+      // The opening materials are compiled (compileAsync) and their textures
+      // are initialized (uploadVisibleTextures) before this render, so the
+      // driver finishes uploading on its own within the first frames.
+      // A GPU fence used to wait here via rAF polling against a 1200ms deadline;
+      // on slow/software renderers the fence never signaled in time, so every
+      // non-blocking poll cost a whole frame and the wait ballooned to ~2s.
+      // Let the scene start immediately instead of holding the loading screen
+      // hostage to a driver that may never signal the fence.
     }
+    const PERF = (typeof window !== 'undefined' && window.__QA_PERF__);
+    const perfMark = (label, t) => { if (PERF) console.log('[PERF]', label, Math.round(performance.now() - t) + 'ms'); };
     async function firstDraw(nextFrame, onStage) {
+      const T0 = performance.now();
       prepareScene(0);
       onStage?.('正在准备画面…', 0.85);
       const mode = displayMode();
@@ -4188,20 +4191,26 @@
         prepareReflections.warmup?.();
         await nextFrame();
       }
+      perfMark('warmup', T0);
       onStage?.(null, 0.86);
+      const T1 = performance.now();
       await uploadVisibleTextures(nextFrame, onStage);
+      perfMark('uploadTextures', T1);
       await nextFrame();
       onStage?.(null, 0.93);
+      const T2 = performance.now();
       if (typeof renderer.compileAsync === 'function') {
         await renderer.compileAsync(scene, camera);
       } else {
         renderer.compile(scene, camera);
       }
+      perfMark('compile', T2);
       renderScene.warmup?.(camera);
       const programs = renderer.info.programs.slice();
       const parallel = gl.getExtension('KHR_parallel_shader_compile');
       onStage?.(null, 0.94);
       await nextFrame();
+      const T3 = performance.now();
       if (parallel) {
         const until = performance.now() + 8000;
         const totalPrograms = Math.max(1, programs.length);
@@ -4228,9 +4237,13 @@
           batchStart = performance.now();
         }
       }
+      perfMark('shaderWait', T3);
       onStage?.(null, 0.98);
+      const T4 = performance.now();
       resize();
       await drawOpeningMaterials(nextFrame);
+      perfMark('drawOpening', T4);
+      perfMark('TOTAL firstDraw', T0);
       onStage?.(null, 1);
     }
     function applyResolution() {

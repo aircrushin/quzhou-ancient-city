@@ -393,9 +393,174 @@
       pavement: 'assets/pbr/bluestone_albedo.webp', 'pavement-normal': 'assets/pbr/bluestone_normal.webp',
       plaster: 'assets/quzhou-plaster.webp', 'plaster-normal': 'assets/pbr/plaster_normal.webp', metal: 'assets/quzhou-tile-wood.webp',
     };
+    const screenBlank = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+    screenBlank.colorSpace = T.NoColorSpace;
+    screenBlank.magFilter = screenBlank.minFilter = T.LinearFilter;
+    screenBlank.generateMipmaps = false;
+    screenBlank.needsUpdate = true;
+    const screenReflect = {
+      color: { value: screenBlank },
+      depth: { value: screenBlank },
+      viewProj: { value: new T.Matrix4() },
+      strength: { value: 0 },
+      ready: { value: 0 },
+      near: { value: .17 },
+      far: { value: 1500 },
+    };
+
+    function tileHash(ix, iy) {
+      let n = Math.imul(ix | 0, 374761393) + Math.imul(iy | 0, 668265263);
+      n = (n ^ (n >>> 13)) >>> 0;
+      n = Math.imul(n, 1274126177);
+      return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+    }
+    function tileNoise(px, py, period) {
+      const x0 = Math.floor(px), y0 = Math.floor(py);
+      const fx = px - x0, fy = py - y0;
+      const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+      const wrap = i => ((i % period) + period) % period;
+      const h00 = tileHash(wrap(x0), wrap(y0));
+      const h10 = tileHash(wrap(x0 + 1), wrap(y0));
+      const h01 = tileHash(wrap(x0), wrap(y0 + 1));
+      const h11 = tileHash(wrap(x0 + 1), wrap(y0 + 1));
+      const ix = h00 + (h10 - h00) * sx;
+      return ix + (h01 + (h11 - h01) * sx - ix) * sy;
+    }
+    function makeTileTexture(paint, srgb) {
+      const size = 256;
+      const data = new Uint8Array(size * size * 4);
+      paint(data, size);
+      const texture = new T.DataTexture(data, size, size, T.RGBAFormat);
+      texture.colorSpace = srgb ? T.SRGBColorSpace : T.NoColorSpace;
+      texture.wrapS = texture.wrapT = T.RepeatWrapping;
+      texture.anisotropy = 8;
+      texture.magFilter = T.LinearFilter;
+      texture.minFilter = T.LinearMipmapLinearFilter;
+      texture.generateMipmaps = true;
+      texture.needsUpdate = true;
+      return texture;
+    }
+    function writeNormal(data, i, nx, ny) {
+      const nz = Math.sqrt(Math.max(.04, 1 - nx * nx - ny * ny));
+      data[i] = (nx * .5 + .5) * 255;
+      data[i + 1] = (ny * .5 + .5) * 255;
+      data[i + 2] = (nz * .5 + .5) * 255;
+      data[i + 3] = 255;
+    }
+    function paintBrick(data, size) {
+      const bw = 64, bh = 32, mortar = 4;
+      for (let y = 0; y < size; y++) {
+        const row = Math.floor(y / bh), ly = y - row * bh;
+        const shift = (row & 1) * (bw >> 1);
+        for (let x = 0; x < size; x++) {
+          const sx = x + shift, lx = sx % bw;
+          const origin = Math.floor(sx / bw) * bw;
+          const id = tileHash(((origin % size) + size) % size, row);
+          const grain = tileHash(x, y);
+          const joint = lx < mortar || ly < mortar;
+          const tone = .84 + id * .26;
+          const r = joint ? 176 + grain * 16 : (128 + id * 52) * tone * (.9 + grain * .12);
+          const g = joint ? 166 + grain * 14 : (62 + id * 30) * tone * (.9 + grain * .1);
+          const b = joint ? 152 + grain * 12 : (46 + id * 18) * tone * (.92 + grain * .08);
+          const i = (y * size + x) * 4;
+          data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
+        }
+      }
+    }
+    function paintBrickNormal(data, size) {
+      const bw = 64, bh = 32, mortar = 4;
+      for (let y = 0; y < size; y++) {
+        const row = Math.floor(y / bh), ly = y - row * bh;
+        const shift = (row & 1) * (bw >> 1);
+        for (let x = 0; x < size; x++) {
+          const lx = (x + shift) % bw;
+          const left = Math.max(0, 6 - (lx - mortar));
+          const right = Math.max(0, 6 - (bw - lx));
+          const top = Math.max(0, 6 - (ly - mortar));
+          const bottom = Math.max(0, 6 - (bh - ly));
+          const nx = Math.max(-.9, Math.min(.9, (right - left) / 6));
+          const ny = Math.max(-.9, Math.min(.9, (bottom - top) / 6));
+          writeNormal(data, (y * size + x) * 4, nx * .8, ny * .8);
+        }
+      }
+    }
+    function paintRoof(data, size) {
+      const tw = 32, th = 16;
+      for (let y = 0; y < size; y++) {
+        const row = Math.floor(y / th), ly = y - row * th;
+        const shift = (row & 1) * (tw >> 1);
+        for (let x = 0; x < size; x++) {
+          const sx = x + shift, lx = sx % tw;
+          const origin = Math.floor(sx / tw) * tw;
+          const id = tileHash(((origin % size) + size) % size, row * 3);
+          const u = (lx + .5) / tw * 2 - 1;
+          const arch = Math.sqrt(Math.max(0, 1 - u * u));
+          const lip = ly < 2 ? .58 : ly < 4 ? .76 : 1;
+          const tone = (.76 + id * .3) * (.6 + .4 * arch) * lip;
+          const i = (y * size + x) * 4;
+          data[i] = 58 * tone + id * 10;
+          data[i + 1] = 66 * tone + id * 8;
+          data[i + 2] = 78 * tone + id * 5;
+          data[i + 3] = 255;
+        }
+      }
+    }
+    function paintRoofNormal(data, size) {
+      const tw = 32, th = 16;
+      for (let y = 0; y < size; y++) {
+        const row = Math.floor(y / th), ly = y - row * th;
+        const shift = (row & 1) * (tw >> 1);
+        for (let x = 0; x < size; x++) {
+          const lx = (x + shift) % tw;
+          const u = (lx + .5) / tw * 2 - 1;
+          const nx = Math.max(-.85, Math.min(.85, u * .72));
+          const ny = ly < 3 ? -.48 : .06;
+          writeNormal(data, (y * size + x) * 4, nx, ny);
+        }
+      }
+    }
+    function paintGrass(data, size) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const n = tileNoise(x, y, size) * .55 + tileNoise(x * 2, y * 2, size * 2) * .3 + tileNoise(x * 4, y * 4, size * 4) * .15;
+          const blade = tileHash(Math.floor(x / 2) + Math.floor(y / 7) * 13, Math.floor(y / 3));
+          const dry = Math.min(1, Math.max(0, (n - .58) / .28));
+          const shade = .82 + blade * .28;
+          const r = (46 + n * 38 + dry * 54) * shade;
+          const g = (86 + n * 48 - dry * 22) * shade;
+          const b = (34 + n * 16 - dry * 8) * shade;
+          const i = (y * size + x) * 4;
+          data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
+        }
+      }
+    }
+    function grassHeight(px, py, size) {
+      return tileNoise(px, py, size) * .55 + tileNoise(px * 2, py * 2, size * 2) * .3 + tileNoise(px * 4, py * 4, size * 4) * .15;
+    }
+    function paintGrassNormal(data, size) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const hx = grassHeight(x + 1, y, size) - grassHeight(x - 1, y, size);
+          const hy = grassHeight(x, y + 1, size) - grassHeight(x, y - 1, size);
+          writeNormal(data, (y * size + x) * 4, Math.max(-.8, Math.min(.8, -hx * 1.5)), Math.max(-.8, Math.min(.8, -hy * 1.5)));
+        }
+      }
+    }
+    const generatedTiles = {
+      brick: () => makeTileTexture(paintBrick, true),
+      'brick-normal': () => makeTileTexture(paintBrickNormal, false),
+      roof: () => makeTileTexture(paintRoof, true),
+      'roof-normal': () => makeTileTexture(paintRoofNormal, false),
+      grass: () => makeTileTexture(paintGrass, true),
+      'grass-normal': () => makeTileTexture(paintGrassNormal, false),
+    };
 
     function surfaceTexture(name, srgb) {
       if (textures[name]) return textures[name];
+      if (generatedTiles[name]) {
+        textures[name] = generatedTiles[name]();
+        return textures[name];
+      }
       const texture = textureLoader.load(assetPaths[name]);
       texture.wrapS = texture.wrapT = T.RepeatWrapping;
       texture.colorSpace = srgb ? T.SRGBColorSpace : T.NoColorSpace;
@@ -438,6 +603,7 @@
     function weatherSurface(material, pattern, size = 2, normalMap = null) {
       const isAsphalt = pattern === 'asphalt';
       const isWall = pattern === 'plaster' || pattern === 'metal';
+      const isMasonry = pattern === 'brick' || pattern === 'roof';
       const albedo = pattern === 'timber' ? null : surfaceTexture(pattern, true);
       const detail = normalMap ? surfaceTexture(normalMap, false) : (pattern === 'plaster' ? surfaceTexture('plaster-normal', false) : null);
       material.customProgramCacheKey = () => 'baixi-weather-' + pattern + '-' + size + '-' + (normalMap || '');
@@ -446,7 +612,9 @@
           streetShade: { value: streetShade },
           baixiSunColor: roadTint, baixiAlbedo: { value: albedo }, baixiNormalMap: { value: detail } });
         if (isAsphalt) Object.assign(shader.uniforms, { roadMirror: roadReflection.image, mirrorProject: roadReflection.projection,
-          mirrorStrength: roadReflection.strength, roadSky, roadHorizon });
+          mirrorStrength: roadReflection.strength, roadSky, roadHorizon,
+          ssrColor: screenReflect.color, ssrDepth: screenReflect.depth, ssrVP: screenReflect.viewProj,
+          ssrK: screenReflect.strength, ssrReady: screenReflect.ready, ssrNear: screenReflect.near, ssrFar: screenReflect.far });
         shader.vertexShader = 'varying vec3 vBaixiPosition,vBaixiFacing;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', [
           '#include <worldpos_vertex>',
           'vec4 baixiPosition = vec4(transformed,1.0);',
@@ -460,7 +628,7 @@
           'varying vec3 vBaixiPosition,vBaixiFacing;',
           'uniform float baixiWet,baixiRain,baixiTime,baixiDetail; uniform sampler2D streetShade;',
           'uniform vec3 baixiSun,baixiSunColor;',
-          isAsphalt ? 'uniform sampler2D roadMirror; uniform mat4 mirrorProject; uniform float mirrorStrength; uniform vec3 roadSky,roadHorizon;' : '',
+          isAsphalt ? 'uniform sampler2D roadMirror,ssrColor,ssrDepth; uniform mat4 mirrorProject,ssrVP; uniform float mirrorStrength,ssrK,ssrReady,ssrNear,ssrFar; uniform vec3 roadSky,roadHorizon;\nfloat ssrEye(float d){return (ssrNear*ssrFar)/((ssrFar-ssrNear)*d-ssrFar);}' : '',
           albedo ? 'uniform sampler2D baixiAlbedo;' : '',
           detail ? 'uniform sampler2D baixiNormalMap;' : '',
           'float saltNoise(vec2 v){ vec3 a = fract(vec3(v.xyx) * vec3(.1031,.0973,.1099)); a += dot(a,a.yzx+33.33); return fract((a.x+a.y)*a.z); }',
@@ -489,6 +657,17 @@
               '}',
               'float wallSeaLevel = .89+.11*smoothstep(.18,2.5,vBaixiPosition.y);',
               'diffuseColor.rgb *= wallSeaLevel * mix(.75,1.23,smoothstep(.10,.65,dot(detailCol,vec3(.21,.72,.07))));',
+            ].join('\n') : isMasonry ? [
+              'vec3 mP = vBaixiPosition/' + size.toFixed(2) + ';',
+              'vec3 detailCol;',
+              'if(baixiDetail>.5){',
+              '  vec3 planar = pow(face,vec3(8.0)); planar /= max(.001,dot(planar,vec3(1.)));',
+              '  detailCol = texture2D(baixiAlbedo,mP.yz).rgb*planar.x + texture2D(baixiAlbedo,mP.xz).rgb*planar.y + texture2D(baixiAlbedo,mP.xy).rgb*planar.z;',
+              '}else{',
+              '  vec2 uv = face.y>max(face.x,face.z) ? mP.xz : face.x>face.z ? mP.yz : mP.xy;',
+              '  detailCol = texture2D(baixiAlbedo,uv).rgb;',
+              '}',
+              'diffuseColor.rgb = mix(diffuseColor.rgb, detailCol, .82) * (.92 + .14*stain);',
             ].join('\n') : albedo ? [
               'vec3 detailCol = texture2D(baixiAlbedo,surfaceUV).rgb;',
               'float aggregate = dot(detailCol,vec3(.21,.72,.07));',
@@ -517,6 +696,13 @@
                 '  vec3 tangX = transformDirection(face.x>face.z ? vec3(0,0,1) : vec3(1,0,0),viewMatrix);',
                 '  vec3 tangY = transformDirection(vec3(0,1,0),viewMatrix);',
                 '  normal = normalize(normal+(tangX*grit.x+tangY*grit.y)*.32*detailFade);',
+              ].join('\n') : isMasonry ? [
+                '  vec3 mP = vBaixiPosition/' + size.toFixed(2) + ';',
+                '  vec2 mUV = face.y>max(face.x,face.z) ? mP.xz : face.x>face.z ? mP.yz : mP.xy;',
+                '  vec2 grit = texture2D(baixiNormalMap,mUV).xy*2.0-1.0;',
+                '  vec3 tangX = transformDirection(face.y>max(face.x,face.z) ? vec3(1,0,0) : face.x>face.z ? vec3(0,0,1) : vec3(1,0,0),viewMatrix);',
+                '  vec3 tangY = transformDirection(face.y>max(face.x,face.z) ? vec3(0,0,1) : vec3(0,1,0),viewMatrix);',
+                '  normal = normalize(normal+(tangX*grit.x+tangY*grit.y)*' + (pattern === 'brick' ? '.62' : '.48') + '*detailFade);',
               ].join('\n') : [
                 '  vec2 grit = texture2D(baixiNormalMap,surfaceUV).xy*2.0-1.0;',
                 '  vec3 surfaceX = transformDirection(vec3(1,0,0),viewMatrix);',
@@ -546,6 +732,30 @@
               '  vec3 reflectedLight = texture2D(roadMirror,clamp(at+perturb,.001,.999),blurBias).rgb;',
               '  float glaze = (.26+.74*angle)*baixiWet*mirrorStrength*edgeFade*(.065+.62*mirrorPuddle);',
               '  totalEmissiveRadiance += reflectedLight*glaze*vec3(.92,.98,1.0);',
+              '} else if(ssrK>.01 && ssrReady>.5){',
+              '  vec3 sN = normalize(vec3((stain-.5)*.10,1.,(pooled-.5)*.07));',
+              '  vec3 sV = normalize(vBaixiPosition-cameraPosition);',
+              '  vec3 sR = reflect(sV,sN);',
+              '  float sCos = clamp(dot(-sV,sN),0.,1.);',
+              '  float sStep = .5; vec3 sq = vBaixiPosition + sN*.16 + sR*sStep*fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));',
+              '  float sHit = 0.; float sFade = 1.; vec2 suv = vec2(.5); vec3 sGlow = vec3(0.); float sW = 0.;',
+              '  for(int i=0;i<12;i++){',
+              '    sq += sR*sStep; sStep *= 1.36;',
+              '    vec4 sc = ssrVP*vec4(sq,1.); if(sc.w<=.05) break;',
+              '    vec3 ndc = sc.xyz/sc.w; suv = ndc.xy*.5+.5;',
+              '    if(suv.x<0.||suv.x>1.||suv.y<0.||suv.y>1.){ sFade = 0.; break; }',
+              '    float sceneZ = ssrEye(texture2D(ssrDepth,suv).r);',
+              '    float rayZ = ssrEye(ndc.z*.5+.5);',
+              '    float df = sceneZ-rayZ;',
+              '    if(df>0. && df<sStep*2.2+1.35){ sHit = 1.; break; }',
+              '    if(df<-.35){ vec3 g = min(max(texture2D(ssrColor,suv,1.).rgb-vec3(.92),0.),vec3(.85)); float w = 1./(1.+float(i)*.12); sGlow += g*w; sW += w; }',
+              '  }',
+              '  vec2 se = min(suv,1.-suv); sFade *= smoothstep(0.,.05,se.x)*smoothstep(0.,.05,se.y);',
+              '  float roughBias = 1.15+(1.-puddle)*1.55;',
+              '  vec3 sCol = sHit*texture2D(ssrColor,suv,roughBias).rgb*sFade + sGlow/max(sW,1.)*.65;',
+              '  float sF = mix(.1,.74,pow(1.-sCos,2.05));',
+              '  sF *= mix(.34,1.,smoothstep(.38,.74,pooled));',
+              '  totalEmissiveRadiance += min(sCol,vec3(1.7))*sF*ssrK;',
               '} else {',
               '  vec3 skyGlaze = mix(roadHorizon,roadSky,clamp(.33+eye.y*.48+(1.-pooled)*.12,0.,1.));',
               '  totalEmissiveRadiance += skyGlaze * angle * (.028*baixiWet+.30*puddle);',
@@ -558,9 +768,14 @@
     weatherSurface(asphalt, 'asphalt', 2.65, 'asphalt-normal');
     weatherSurface(cement, 'pavement', 1.8, 'pavement-normal');
     weatherSurface(boardwalk, 'timber', 2.4);
-    grass.customProgramCacheKey = () => 'baixi-photoreal-grass';
+    weatherSurface(brick, 'brick', 1.35, 'brick-normal');
+    weatherSurface(roof, 'roof', 1.55, 'roof-normal');
+    const grassAlbedo = surfaceTexture('grass', true);
+    const grassNormalMap = surfaceTexture('grass-normal', false);
+    grass.customProgramCacheKey = () => 'baixi-photoreal-grass-pbr';
     grass.onBeforeCompile = shader => {
-      Object.assign(shader.uniforms, { streetShade: { value: streetShade }, grassWet: wet });
+      Object.assign(shader.uniforms, { streetShade: { value: streetShade }, grassWet: wet,
+        grassAlbedo: { value: grassAlbedo }, grassNormal: { value: grassNormalMap } });
       shader.vertexShader = 'varying vec3 vGrassPos;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', [
         '#include <worldpos_vertex>',
         'vec4 gPos = vec4(transformed,1.0);',
@@ -570,7 +785,7 @@
         'vGrassPos = (modelMatrix * gPos).xyz;',
       ].join('\n'));
       shader.fragmentShader = [
-        'varying vec3 vGrassPos; uniform sampler2D streetShade; uniform float grassWet;',
+        'varying vec3 vGrassPos; uniform sampler2D streetShade,grassAlbedo,grassNormal; uniform float grassWet;',
         'float gHash(vec2 v){ vec3 a = fract(vec3(v.xyx)*vec3(.1031,.0973,.1099)); a += dot(a,a.yzx+33.33); return fract((a.x+a.y)*a.z); }',
         'float gNoise(vec2 p){ vec2 f=fract(p),k=f*f*(3.-2.*f),i=floor(p); return mix(mix(gHash(i),gHash(i+vec2(1,0)),k.x),mix(gHash(i+vec2(0,1)),gHash(i+1.),k.x),k.y); }',
         shader.fragmentShader.replace('#include <color_fragment>', [
@@ -584,14 +799,18 @@
           'vec3 turf = mix(lush, olive, smoothstep(.22,.78,meadow));',
           'turf = mix(turf, dryStraw, patchDry * .42);',
           'turf *= .84 + .32 * mix(.5, blades, .35 + .65*gFade);',
+          'vec3 gTex = texture2D(grassAlbedo, gp/1.45).rgb;',
+          'float gLum = dot(gTex, vec3(.20,.72,.08));',
+          'turf = mix(turf, gTex, .46) * (.84 + .30*smoothstep(.16,.74,gLum));',
           'float gContact = texture2D(streetShade,(gp-vec2(' + shadeOrigin.toFixed(1) + '))/' + shadeSpan.toFixed(1) + ').r;',
           'diffuseColor.rgb = turf * mix(.55, 1.0, gContact) * (1.0 - grassWet*.14);',
         ].join('\n')).replace('#include <normal_fragment_maps>', [
           '#include <normal_fragment_maps>',
           'vec2 gN = vec2(gNoise(vGrassPos.xz*7.5)-.5, gNoise(vGrassPos.xz*7.5+vec2(3.7,8.2))-.5);',
+          'vec2 gMap = texture2D(grassNormal, vGrassPos.xz/1.45).xy*2.0-1.0;',
           'vec3 gx = transformDirection(vec3(1,0,0),viewMatrix);',
           'vec3 gz = transformDirection(vec3(0,0,1),viewMatrix);',
-          'normal = normalize(normal + (gx*gN.x + gz*gN.y) * .45 * gFade);',
+          'normal = normalize(normal + (gx*(gN.x*.4+gMap.x*.7) + gz*(gN.y*.4+gMap.y*.7)) * gFade);',
         ].join('\n')),
       ].join('\n');
     };
@@ -2993,7 +3212,7 @@
       return night;
     }
 
-    return { collision, blockedAt, clearFraction, vehicleBlocked, surfaceHeight, occluded, footprints, light, sun, water, roadReflection,
+    return { collision, blockedAt, clearFraction, vehicleBlocked, surfaceHeight, occluded, footprints, light, sun, water, roadReflection, screenReflect,
       skyUniforms, shelters, trafficLayout, atmosphere: { lanternHalos, riverLanternGroup, riverLanternCount: riverLanternSpecs.length, skyLanternGroup, skyLanternCount: skyLanternSpecs.length, plumeMesh, plumeCount: totalPlumes, haloCount: haloAnchors.length },
       initialTextures: [...Object.values(textures), streetShade], setDetail, updateVisibleStreet };
   }

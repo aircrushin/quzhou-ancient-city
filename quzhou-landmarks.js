@@ -36,18 +36,209 @@
     return geo;
   }
 
+  function wireMasonry(material, surfaceTexture, albedoName, normalName, size, amount) {
+    if (!material || material.userData.masonryWired) return material;
+    material.userData.masonryWired = true;
+    const albedo = surfaceTexture(albedoName, true);
+    const normal = surfaceTexture(normalName, false);
+    const scale = size.toFixed(2);
+    const mixAmt = amount.toFixed(2);
+    material.customProgramCacheKey = () => 'qz-masonry-' + albedoName + scale + mixAmt;
+    material.onBeforeCompile = shader => {
+      Object.assign(shader.uniforms, { qzAlbedo: { value: albedo }, qzNormal: { value: normal } });
+      shader.vertexShader = 'varying vec3 vQzPos,vQzNrm;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', [
+        '#include <worldpos_vertex>',
+        'vec4 qzP = vec4(transformed,1.0);',
+        '#ifdef USE_INSTANCING',
+        '  qzP = instanceMatrix * qzP;',
+        '#endif',
+        'vQzPos = (modelMatrix * qzP).xyz;',
+        'vQzNrm = inverseTransformDirection(normalize(transformedNormal), viewMatrix);',
+      ].join('\n'));
+      shader.fragmentShader = 'varying vec3 vQzPos,vQzNrm; uniform sampler2D qzAlbedo,qzNormal;\n' + shader.fragmentShader
+        .replace('#include <color_fragment>', [
+          '#include <color_fragment>',
+          'vec3 qzFace = abs(normalize(vQzNrm));',
+          'vec3 qzP = vQzPos / ' + scale + ';',
+          'vec3 qzPlanar = pow(qzFace, vec3(8.0)); qzPlanar /= max(.001, dot(qzPlanar, vec3(1.0)));',
+          'vec3 qzCol = texture2D(qzAlbedo,qzP.yz).rgb*qzPlanar.x + texture2D(qzAlbedo,qzP.xz).rgb*qzPlanar.y + texture2D(qzAlbedo,qzP.xy).rgb*qzPlanar.z;',
+          'diffuseColor.rgb = mix(diffuseColor.rgb, qzCol, ' + mixAmt + ');',
+        ].join('\n'))
+        .replace('#include <normal_fragment_maps>', [
+          '#include <normal_fragment_maps>',
+          'vec2 qzUV = qzFace.y>max(qzFace.x,qzFace.z) ? qzP.xz : qzFace.x>qzFace.z ? qzP.yz : qzP.xy;',
+          'vec2 qzGrit = texture2D(qzNormal, qzUV).xy*2.0-1.0;',
+          'vec3 qzX = transformDirection(qzFace.y>max(qzFace.x,qzFace.z) ? vec3(1,0,0) : qzFace.x>qzFace.z ? vec3(0,0,1) : vec3(1,0,0), viewMatrix);',
+          'vec3 qzY = transformDirection(qzFace.y>max(qzFace.x,qzFace.z) ? vec3(0,0,1) : vec3(0,1,0), viewMatrix);',
+          'normal = normalize(normal + (qzX*qzGrit.x + qzY*qzGrit.y) * .5);',
+        ].join('\n'));
+    };
+    material.needsUpdate = true;
+    return material;
+  }
+
+  function stampWindowUv(T, geometry) {
+    if (!geometry || geometry.userData.windowUv) return geometry;
+    const position = geometry.getAttribute('position');
+    const index = geometry.getIndex();
+    if (!position) return geometry;
+    const triCount = (index ? index.count : position.count) / 3;
+    const at = i => {
+      const k = index ? index.getX(i) : i;
+      return [position.getX(k), position.getY(k), position.getZ(k), k];
+    };
+    const tris = new Array(triCount);
+    for (let t = 0; t < triCount; t++) {
+      const A = at(t * 3), B = at(t * 3 + 1), C = at(t * 3 + 2);
+      const e1x = B[0] - A[0], e1y = B[1] - A[1], e1z = B[2] - A[2];
+      const e2x = C[0] - A[0], e2y = C[1] - A[1], e2z = C[2] - A[2];
+      let nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      nx /= nl; ny /= nl; nz /= nl;
+      tris[t] = { A, B, C, nx, ny, nz };
+    }
+    const parent = new Int32Array(triCount);
+    for (let i = 0; i < triCount; i++) parent[i] = i;
+    const find = i => {
+      while (parent[i] !== i) {
+        parent[i] = parent[parent[i]];
+        i = parent[i];
+      }
+      return i;
+    };
+    const edgeOwner = new Map();
+    for (let t = 0; t < triCount; t++) {
+      const ids = [tris[t].A[3], tris[t].B[3], tris[t].C[3]];
+      for (let e = 0; e < 3; e++) {
+        const a = ids[e], b = ids[(e + 1) % 3];
+        const key = a < b ? a + ':' + b : b + ':' + a;
+        const other = edgeOwner.get(key);
+        if (other === undefined) edgeOwner.set(key, t);
+        else if (tris[other].nx * tris[t].nx + tris[other].ny * tris[t].ny + tris[other].nz * tris[t].nz > .92) {
+          parent[find(t)] = find(other);
+        }
+      }
+    }
+    const groups = new Map();
+    for (let t = 0; t < triCount; t++) {
+      const g = find(t);
+      let list = groups.get(g);
+      if (!list) groups.set(g, list = []);
+      list.push(tris[t]);
+    }
+    const pos = new Float32Array(triCount * 9);
+    const nrm = new Float32Array(triCount * 9);
+    const uv = new Float32Array(triCount * 6);
+    let w = 0;
+    for (const list of groups.values()) {
+      let nx = 0, ny = 0, nz = 0;
+      for (const tri of list) { nx += tri.nx; ny += tri.ny; nz += tri.nz; }
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      nx /= nl; ny /= nl; nz /= nl;
+      const helper = Math.abs(ny) < .9 ? [0, 1, 0] : [1, 0, 0];
+      let ux = helper[1] * nz - helper[2] * ny;
+      let uy = helper[2] * nx - helper[0] * nz;
+      let uz = helper[0] * ny - helper[1] * nx;
+      const ul = Math.hypot(ux, uy, uz) || 1;
+      ux /= ul; uy /= ul; uz /= ul;
+      const vx = ny * uz - nz * uy, vy = nz * ux - nx * uz, vz = nx * uy - ny * ux;
+      let minU = Infinity, minV = Infinity, maxU = -Infinity, maxV = -Infinity;
+      const projected = [];
+      for (const tri of list) {
+        for (const p of [tri.A, tri.B, tri.C]) {
+          const u = p[0] * ux + p[1] * uy + p[2] * uz;
+          const v = p[0] * vx + p[1] * vy + p[2] * vz;
+          projected.push(u, v);
+          if (u < minU) minU = u;
+          if (v < minV) minV = v;
+          if (u > maxU) maxU = u;
+          if (v > maxV) maxV = v;
+        }
+      }
+      const du = Math.max(1e-5, maxU - minU), dv = Math.max(1e-5, maxV - minV);
+      let k = 0;
+      for (const tri of list) {
+        for (const p of [tri.A, tri.B, tri.C]) {
+          const u = projected[k++], v = projected[k++];
+          const o3 = w * 3, o2 = w * 2;
+          pos[o3] = p[0]; pos[o3 + 1] = p[1]; pos[o3 + 2] = p[2];
+          nrm[o3] = nx; nrm[o3 + 1] = ny; nrm[o3 + 2] = nz;
+          uv[o2] = (u - minU) / du;
+          uv[o2 + 1] = (v - minV) / dv;
+          w++;
+        }
+      }
+    }
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    geo.setAttribute('normal', new T.BufferAttribute(nrm, 3));
+    geo.setAttribute('windowUv', new T.BufferAttribute(uv, 2));
+    geo.computeBoundingSphere();
+    geo.userData.windowUv = true;
+    return geo;
+  }
+
+  function wireWindowRecess(material) {
+    if (!material || material.userData.windowRecess) return;
+    material.userData.windowRecess = true;
+    const previous = material.customProgramCacheKey ? material.customProgramCacheKey() : '';
+    material.customProgramCacheKey = () => previous + 'winrecess';
+    material.onBeforeCompile = shader => {
+      shader.vertexShader = 'attribute vec2 windowUv;\nvarying vec2 vWinUv;\nvarying vec3 vWinW;\nvarying vec3 vWinN;\n'
+        + shader.vertexShader.replace('#include <project_vertex>', [
+          '#include <project_vertex>',
+          'vWinUv = windowUv;',
+          'vec4 winLocal = vec4(transformed, 1.0);',
+          '#ifdef USE_INSTANCING',
+          '  winLocal = instanceMatrix * winLocal;',
+          '#endif',
+          'vWinW = (modelMatrix * winLocal).xyz;',
+          '#ifdef USE_INSTANCING',
+          '  vWinN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);',
+          '#else',
+          '  vWinN = normalize(mat3(modelMatrix) * objectNormal);',
+          '#endif',
+        ].join('\n'));
+      shader.fragmentShader = 'varying vec2 vWinUv;\nvarying vec3 vWinW;\nvarying vec3 vWinN;\n'
+        + shader.fragmentShader.replace('#include <emissivemap_fragment>', [
+          '#include <emissivemap_fragment>',
+          'vec3 winN = normalize(vWinN);',
+          'vec3 winV = normalize(cameraPosition - vWinW);',
+          'float winFace = max(dot(winN, winV), 0.0);',
+          'vec3 winDp1 = dFdx(vWinW); vec3 winDp2 = dFdy(vWinW);',
+          'vec2 winDu1 = dFdx(vWinUv); vec2 winDu2 = dFdy(vWinUv);',
+          'vec3 winT = winDp1 * winDu2.y - winDp2 * winDu1.y;',
+          'vec3 winB = winDp2 * winDu1.x - winDp1 * winDu2.x;',
+          'float winTl = length(winT), winBl = length(winB);',
+          'winT = winTl > 1e-5 ? winT / winTl : vec3(1.0, 0.0, 0.0);',
+          'winB = winBl > 1e-5 ? winB / winBl : vec3(0.0, 1.0, 0.0);',
+          'vec2 winView = vec2(dot(winV, winT), dot(winV, winB));',
+          'vec2 paneUv = vWinUv - winView * (0.11 / max(winFace, 0.2));',
+          'float edge = min(min(vWinUv.x, 1.0 - vWinUv.x), min(vWinUv.y, 1.0 - vWinUv.y));',
+          'float frame = smoothstep(0.0, 0.09, edge);',
+          'float paneEdge = min(min(paneUv.x, 1.0 - paneUv.x), min(paneUv.y, 1.0 - paneUv.y));',
+          'float pane = smoothstep(-0.02, 0.04, paneEdge);',
+          'float mullion = min(smoothstep(0.012, 0.038, abs(paneUv.x - 0.5)), smoothstep(0.012, 0.038, abs(paneUv.y - 0.5)));',
+          'diffuseColor.rgb *= mix(0.32, 1.0, frame);',
+          'totalEmissiveRadiance *= mix(0.07, 1.0, frame * pane * mix(0.38, 1.0, mullion));',
+        ].join('\n'));
+    };
+    material.needsUpdate = true;
+  }
+
   function createPalette(T, nightMaterials, surfaceTexture) {
-    const plasterMap = surfaceTexture('plaster', true);
     const pavementMap = surfaceTexture('pavement', true);
     const mat = (color, roughness = .84, extra = {}) => new T.MeshStandardMaterial({ color, roughness, ...extra });
+    const masonry = (color, roughness, albedoName, normalName, size, amount, extra) => wireMasonry(
+      mat(color, roughness, extra), surfaceTexture, albedoName, normalName, size, amount);
 
-    const cityBrick = mat('#767e84', .88, { map: pavementMap });
-    const darkBrick = mat('#565f66', .9, { map: pavementMap });
-    const whiteWall = mat('#f2ede3', .84, { map: plasterMap });
-    const warmWall = mat('#e9dfcc', .86, { map: plasterMap });
-    const slateTile = mat('#3b4550', .74, { metalness: .08 });
-    const goldTile = mat('#cca042', .46, { metalness: .28 });
-    const vermilion = mat('#aa3a31', .72, { map: plasterMap });
+    const cityBrick = masonry('#8a5a48', .9, 'brick', 'brick-normal', 1.35, .86);
+    const darkBrick = masonry('#5a4038', .92, 'brick', 'brick-normal', 1.2, .82);
+    const whiteWall = masonry('#f2ede3', .84, 'plaster', 'plaster-normal', 2.6, .62);
+    const warmWall = masonry('#e9dfcc', .86, 'plaster', 'plaster-normal', 2.6, .58);
+    const slateTile = masonry('#3b4550', .74, 'roof', 'roof-normal', 1.2, .9, { metalness: .08 });
+    const goldTile = masonry('#cca042', .46, 'roof', 'roof-normal', 1.15, .26, { metalness: .28 });
+    const vermilion = masonry('#aa3a31', .72, 'plaster', 'plaster-normal', 2.2, .22);
     const darkTimber = mat('#5c4134', .80);
     const stone = mat('#b9b6aa', .86, { map: pavementMap });
     const water = mat('#3c8a9e', .20, { metalness: .22 });
@@ -144,7 +335,14 @@
     }
     for (const rec of asset.meshes) {
       for (const prim of rec.primitives) {
-        api.queue(prim.geometry, prim.material, x, y, z, sx, sy, sz, yaw);
+        let geo = prim.geometry;
+        const glowName = prim.material?.name || '';
+        if (glowName === 'pav_glow' || glowName === 'km_glow' || glowName === 'hz_glow') {
+          geo = stampWindowUv(api.T, geo);
+          prim.geometry = geo;
+          wireWindowRecess(prim.material);
+        }
+        api.queue(geo, prim.material, x, y, z, sx, sy, sz, yaw);
       }
     }
     return true;
@@ -252,7 +450,13 @@
         }
         for (const rec of pavAsset.meshes) {
           for (const prim of rec.primitives) {
-            queue(prim.geometry, prim.material, px, 6.88, gz, .74, .86, .80, PI / 2);
+            let geo = prim.geometry;
+            if (prim.material?.name === 'pav_glow') {
+              geo = stampWindowUv(api.T, geo);
+              prim.geometry = geo;
+              wireWindowRecess(prim.material);
+            }
+            queue(geo, prim.material, px, 6.88, gz, .74, .86, .80, PI / 2);
           }
         }
       } else {
@@ -309,7 +513,13 @@
       }
       for (const rec of pavAsset.meshes) {
         for (const prim of rec.primitives) {
-          queue(prim.geometry, prim.material, gx, 7.42, gz, 1.08, 1.05, 1.15, PI / 2);
+          let geo = prim.geometry;
+          if (prim.material?.name === 'pav_glow') {
+            geo = stampWindowUv(api.T, geo);
+            prim.geometry = geo;
+            wireWindowRecess(prim.material);
+          }
+          queue(geo, prim.material, gx, 7.42, gz, 1.08, 1.05, 1.15, PI / 2);
         }
       }
     } else {
@@ -992,7 +1202,13 @@
         }
         for (const rec of pavAsset.meshes) {
           for (const prim of rec.primitives) {
-            queue(prim.geometry, prim.material, dx, 6.04, dz, .76, .82, .72, 0);
+            let geo = prim.geometry;
+            if (prim.material?.name === 'pav_glow') {
+              geo = stampWindowUv(api.T, geo);
+              prim.geometry = geo;
+              wireWindowRecess(prim.material);
+            }
+            queue(geo, prim.material, dx, 6.04, dz, .76, .82, .72, 0);
           }
         }
       } else {
@@ -1022,7 +1238,13 @@
       }
       for (const rec of pavAsset.meshes) {
         for (const prim of rec.primitives) {
-          queue(prim.geometry, prim.material, dx, 6.42, dz + 8, 1.18, 1.0, 1.02, 0);
+          let geo = prim.geometry;
+          if (prim.material?.name === 'pav_glow') {
+            geo = stampWindowUv(api.T, geo);
+            prim.geometry = geo;
+            wireWindowRecess(prim.material);
+          }
+          queue(geo, prim.material, dx, 6.42, dz + 8, 1.18, 1.0, 1.02, 0);
         }
       }
     } else {
